@@ -1,3 +1,6 @@
+import { TextField } from "@mui/material";
+import { Button } from "@mui/material";
+
 function Login() {
   function doLogin(event: any): void {
     event.preventDefault();
@@ -7,17 +10,12 @@ function Login() {
     <div id="loginDiv">
       <span id="inner-title">PLEASE LOG IN</span>
       <br />
-      <input type="text" id="loginName" placeholder="Username" />
+      <TextField type="text" id="loginName" placeholder="Username" />
       <br />
-      <input type="password" id="loginPassword" placeholder="Password" />
+      <TextField type="password" id="loginPassword" placeholder="Password" />
       <br />
-      <input
-        type="submit"
-        id="loginButton"
-        className="buttons"
-        value="Do It"
-        onClick={doLogin}
-      />
+      <Button> Login </Button>
+      <Button> Sign up </Button>
       <span id="loginResult"></span>
     </div>
   );
