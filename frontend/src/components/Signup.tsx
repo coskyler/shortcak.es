@@ -2,7 +2,7 @@ import { TextField } from "@mui/material";
 import { Button } from "@mui/material";
 
 function Signup() {
-  function doLogin(event: any): void {
+  function doSignup(event: any): void {
     event.preventDefault();
     alert("doIt()");
   }

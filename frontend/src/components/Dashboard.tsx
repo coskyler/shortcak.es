@@ -2,10 +2,6 @@ import { TextField } from "@mui/material";
 import { Button } from "@mui/material";
 
 function Dashboard() {
-  function doLogin(event: any): void {
-    event.preventDefault();
-    alert("doIt()");
-  }
   return (
     <div id="loginDiv">
       <div>
