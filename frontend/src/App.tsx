@@ -1,21 +1,11 @@
-import { useState } from 'react'
-import './App.css'
-import Header from './components/Header'
-import Login from './components/Login'
-import Signup from './components/Signup'
-import  Dashboard from './components/Dashboard'
+import Home from "./pages/Home";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <Dashboard></Dashboard>
-      </div>
-        
-    </>
-  )
+    <div className="min-h-screen">
+      <Home />
+    </div>
+  );
 }
 
-export default App
+export default App;
