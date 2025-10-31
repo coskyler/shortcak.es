@@ -12,6 +12,9 @@ function App() {
     <>
       <div>
         <Dashboard></Dashboard>
+        <Header/>
+        <Login/>
+        <Signup/>
       </div>
         
     </>
