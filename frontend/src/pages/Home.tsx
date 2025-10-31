@@ -1,10 +1,12 @@
-import { FaGoogle, FaArrowLeft } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
+import HomeContent from "../components/HomeContent";
+import SignupForm from "../components/Signup";
+import LoginForm from "../components/Login";
 
-import { useLocation, useNavigate } from "react-router-dom";
 
 function Home() {
-  const { pathname = '/' } = useLocation();
-  const navigate = useNavigate();
+  const { pathname = "/" } = useLocation();
+
 
   return (
     <main className="relative min-h-screen text-cream overflow-hidden p-10 flex items-center bg-gradient-to-br from-black/25 via-rose-500/25 to-black/25">
@@ -16,96 +18,11 @@ function Home() {
           className="w-30 h-30 mb-6 opacity-90"
         />
 
-        {pathname === '/' && (
-          <>
-            {/* Text Content */}
-            <h1 className="text-5xl md:text-6xl font-semibold tracking-tight leading-tight">
-              Smarter Links.<br />Deeper Insights.<br />
-              <span className="text-rose-400">Shortcak.es</span>
-            </h1>
+        {pathname === "/" && <HomeContent />}
 
-            <p className="mt-4 text-cream max-w-lg">
-              Transform every click into real data. Track engagement, location, and growth—all in one dashboard.
-            </p>
+        {pathname === "/signup" && <SignupForm />}
 
-            {/* Auth buttons */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={() => navigate('/signup')}
-                className="hover:cursor-pointer px-6 py-3 border border-rose-400 text-rose-400 rounded-lg font-medium hover:bg-rose-400/10 transition"
-              >
-                Sign Up
-              </button>
-
-              <button className="hover:cursor-pointer flex items-center justify-center gap-2 px-6 py-3 border border-cream text-cream rounded-lg hover:bg-cream/10 transition">
-                <FaGoogle className="text-lg" />
-                <span>Sign In with Google</span>
-              </button>
-            </div>
-          </>
-        )}
-
-        {pathname === '/signup' && (
-          <div className="w-full max-w-lg flex flex-col gap-4">
-            <button onClick={() => navigate('/')} className="hover:cursor-pointer flex items-center gap-2 text-sm text-cream/80 hover:text-cream transition">
-              <FaArrowLeft className="text-base" />Back
-            </button>
-
-            <h1 className="text-5xl md:text-6xl font-semibold tracking-tight leading-tight mb-2">
-              Create Account
-            </h1>
-
-            {/* Email */}
-            <div>
-              <h3 className="text-sm text-neutral-400 mb-1">Email</h3>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="w-full px-6 py-3 border-2 border-cream text-cream rounded-lg bg-transparent placeholder-cream/60 focus:outline-none focus:border-rose-400 transition"
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <h3 className="text-sm text-neutral-400 mb-1">Password</h3>
-              <input
-                type="password"
-                placeholder="Enter your password"
-                className="w-full px-6 py-3 border-2 border-cream text-cream rounded-lg bg-transparent placeholder-cream/60 focus:outline-none focus:border-rose-400 transition"
-              />
-            </div>
-
-            {/* Verify Password */}
-            <div>
-              <h3 className="text-sm text-neutral-400 mb-1">Verify Password</h3>
-              <input
-                type="password"
-                placeholder="Re-enter your password"
-                className="w-full px-6 py-3 border-2 border-cream text-cream rounded-lg bg-transparent placeholder-cream/60 focus:outline-none focus:border-rose-400 transition"
-              />
-            </div>
-
-            {/* Sign Up button */}
-            <button className="hover:cursor-pointer w-full px-6 py-3 border-2 border-rose-400 text-rose-400 rounded-lg font-medium hover:bg-rose-400/10 transition">
-              Sign Up
-            </button>
-
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-2">
-              <div className="h-px flex-1 bg-cream" />
-              <span className="text-xs text-cream">or</span>
-              <div className="h-px flex-1 bg-cream" />
-            </div>
-
-            {/* Google sign-up */}
-            <button className="hover:cursor-pointer flex items-center justify-center gap-2 w-full px-6 py-3 border-2 border-cream text-cream rounded-lg hover:bg-cream/10 transition">
-              <FaGoogle className="text-lg" />
-              <span>Sign Up with Google</span>
-            </button>
-          </div>
-
-        )}
-
+        {pathname === "/login" && <LoginForm />}
       </div>
 
       {/* Decor */}
