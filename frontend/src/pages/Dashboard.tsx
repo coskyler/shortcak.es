@@ -81,7 +81,7 @@ export default function Dashboard() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setAlias(e.target.value)
             }
-            className="flex-1 border border-red-500 bg-black/20 text-cream rounded-lg p-2 <focus:border-red-900></focus:border-red-900> focus:outline-none placeholder-cream/50"
+            className="flex-1 border border-red-500 bg-black/20 text-cream rounded-lg p-2 focus:border-red-900 focus:outline-none placeholder-cream/50"
           />
           <button
             type="submit"
