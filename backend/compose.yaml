@@ -1,0 +1,15 @@
+services:
+  server:
+    build:
+      context: .
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true" # needed on Docker Desktop for nodemon to work
+    env_file: .env
+    volumes:
+      - /usr/src/app/node_modules
+      - ./src:/usr/src/app/src
+    ports:
+      - "${WEB_PORT}:80"
+    restart: unless-stopped
