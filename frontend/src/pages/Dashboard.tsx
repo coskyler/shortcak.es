@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "../components/Header"
 
 type SortKey = "date" | "name";
 
@@ -47,8 +48,9 @@ export default function Dashboard() {
   ];
 
   return (
+    <>
+    <Header/>
     <div className="min-h-screen bg-linear-to-br from-amber-950/25 via-rose-500/25 to-amber-950/25 p-8">
-      <h1 className="text-3xl font-semibold mb-6 text-cream">Dashboard</h1>
 
       <form className="bg-black/40 backdrop-blur-sm p-6 rounded-2xl shadow mb-8 space-y-4 border border-rose-500/20">
         <div>
@@ -134,5 +136,6 @@ export default function Dashboard() {
         </table>
       </div>
     </div>
+    </>
   );
 }
