@@ -3,14 +3,6 @@ import { Input } from "@mui/material";
 
 type SortKey = "date" | "name";
 
-interface LinkRow {
-  name: string;
-  clicks: number;
-  short: string;
-  target: string;
-  date: string; // ISO yyyy-mm-dd
-}
-
 export default function Dashboard() {
   const [url, setUrl] = useState<string>("");
   const [alias, setAlias] = useState<string>("");
@@ -70,7 +62,7 @@ export default function Dashboard() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setUrl(e.target.value)
             }
-            className="w-full border border-red-500 bg-black/20 text-cream rounded-lg p-2 focus:border-red-900 focus:outline-none placeholder-cream/50"
+            className="w-full border border-red-500 text-cream rounded-lg p-2 focus:border-red-900 focus:outline-none placeholder-cream/50"
             required
           />
         </div>
@@ -92,6 +84,9 @@ export default function Dashboard() {
         </div>
       </form>
 
+      <label className="block text-cream font-medium mb-1 pt-5">
+            Enter a URL to shorten
+      </label>
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
@@ -99,7 +94,7 @@ export default function Dashboard() {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setSearch(e.target.value)
           }
-          className="border border-rose-500/30 bg-black/20 text-cream rounded-lg p-2 w-1/3 focus:border-rose-500 focus:outline-none placeholder-cream/50"
+          className="border border-red-500 text-cream rounded-lg p-2 focus:border-red-900 w-1/3 focus:outline-none placeholder-cream/50"
         />
         <select
           value={sortBy}
