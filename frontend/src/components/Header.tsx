@@ -8,8 +8,21 @@ export default function Header() {
   return (
     <header className="bg-rose-600 backdrop-blur-sm border-b border-rose-500/20 px-8 py-4">
       <nav className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-cream">LinkShortener</h1>
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="text-2xl font-semibold text-cream hover:text-rose-200 transition"
+        >
+          ShortCake URL Shortener
+        </button>
+
         <div className="flex gap-6">
+          <button
+            onClick={() => navigate("/analytics")}
+            className="text-md text-cream hover:text-rose-300 transition"
+          >
+            Analytics
+          </button>
+
           <button
             onClick={async () => {
               await signOut(auth);
@@ -18,7 +31,7 @@ export default function Header() {
             className="text-md text-cream hover:text-rose-300 transition"
           >
             Logout
-          </button>{" "}
+          </button>
         </div>
       </nav>
     </header>
