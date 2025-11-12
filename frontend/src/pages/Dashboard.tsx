@@ -1,5 +1,115 @@
 import React, { useState, useMemo } from "react";
 import Header from "../components/Header";
+// import axios from 'axios';
+
+// ===== AXIOS API CALLS (Uncomment when backend is ready) =====
+/*
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+const client = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add auth token to every request
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Get list of links with pagination
+const getLinks = (limit = 25, cursor = null) =>
+  client.get('/api/links', { params: { limit, ...(cursor && { cursor }) } });
+
+// Create a new short link
+const createLink = (redirect: string, name: string, slug = null) =>
+  client.post('/api/links', { redirect, name, ...(slug && { slug }) });
+
+// Update link name
+const updateLink = (slug: string, name: string) =>
+  client.patch('/api/links', { slug, name });
+
+// Delete a link
+const deleteLink = (slug: string) =>
+  client.delete('/api/links', { data: { slug } });
+*/
+
+// ===== HOW TO USE (Example implementation) =====
+/*
+// Fetch links on component mount
+useEffect(() => {
+  const fetchLinks = async () => {
+    try {
+      const response = await getLinks(25);
+      setLinks(response.data.items);
+      setNextCursor(response.data.nextCursor);
+    } catch (error) {
+      console.error('Failed to fetch links:', error);
+    }
+  };
+  fetchLinks();
+}, []);
+
+// Handle form submission
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const response = await createLink(url, "New Link", alias || null);
+    alert(`Link created: ${window.location.origin}/r/${response.data.slug}`);
+    setUrl('');
+    setAlias('');
+    // Refresh links list
+    const linksRes = await getLinks(25);
+    setLinks(linksRes.data.items);
+  } catch (error) {
+    console.error('Failed to create link:', error);
+    alert('Failed to create link');
+  }
+};
+
+// Load more links (pagination)
+const loadMore = async () => {
+  if (nextCursor) {
+    try {
+      const response = await getLinks(25, nextCursor);
+      setLinks([...links, ...response.data.items]);
+      setNextCursor(response.data.nextCursor);
+    } catch (error) {
+      console.error('Failed to load more links:', error);
+    }
+  }
+};
+
+// Delete a link
+const handleDelete = async (slug: string) => {
+  if (!window.confirm('Delete this link?')) return;
+  try {
+    await deleteLink(slug);
+    setLinks(links.filter(link => link.slug !== slug));
+  } catch (error) {
+    console.error('Failed to delete link:', error);
+  }
+};
+
+// Update link name
+const handleRename = async (slug: string, currentName: string) => {
+  const newName = prompt('Enter new name:', currentName);
+  if (!newName || newName === currentName) return;
+  try {
+    await updateLink(slug, newName);
+    setLinks(links.map(link => 
+      link.slug === slug ? { ...link, name: newName } : link
+    ));
+  } catch (error) {
+    console.error('Failed to update link:', error);
+  }
+};
+*/
 
 type SortKey = "name" | "clicks" | "short" | "date";
 type SortOrder = "asc" | "desc";
@@ -11,12 +121,43 @@ export default function Dashboard() {
   const [sortBy, setSortBy] = useState<SortKey>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
+  // ===== DUMMY DATA (Replace with real API call: GET /api/links) =====
   const links = [
-    { name: "Homepage", clicks: 1234, short: "bit.ly/home123", target: "https://example.com", date: "2024-11-01" },
-    { name: "Product Page", clicks: 856, short: "bit.ly/prod456", target: "https://example.com/products", date: "2024-11-03" },
-    { name: "Contact Us", clicks: 432, short: "bit.ly/contact", target: "https://example.com/contact", date: "2024-11-05" },
-    { name: "Blog Post - AI Trends", clicks: 2103, short: "bit.ly/ai2024", target: "https://example.com/blog/ai-trends-2024", date: "2024-10-28" },
-    { name: "Sign Up", clicks: 567, short: "bit.ly/signup", target: "https://example.com/register", date: "2024-11-08" },
+    { 
+      name: "Homepage", 
+      clicks: 1234, 
+      short: "bit.ly/home123", 
+      target: "https://example.com", 
+      date: "2024-11-01" 
+    },
+    { 
+      name: "Product Page", 
+      clicks: 856, 
+      short: "bit.ly/prod456", 
+      target: "https://example.com/products", 
+      date: "2024-11-03" 
+    },
+    { 
+      name: "Contact Us", 
+      clicks: 432, 
+      short: "bit.ly/contact", 
+      target: "https://example.com/contact", 
+      date: "2024-11-05" 
+    },
+    { 
+      name: "Blog Post - AI Trends", 
+      clicks: 2103, 
+      short: "bit.ly/ai2024", 
+      target: "https://example.com/blog/ai-trends-2024", 
+      date: "2024-10-28" 
+    },
+    { 
+      name: "Sign Up", 
+      clicks: 567, 
+      short: "bit.ly/signup", 
+      target: "https://example.com/register", 
+      date: "2024-11-08" 
+    },
   ];
 
   // Filter + Sort
@@ -50,18 +191,33 @@ export default function Dashboard() {
     }
   };
 
+  // ===== FORM SUBMISSION (Use: POST /api/links) =====
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Replace with createLink(url, "New Link", alias || null)
+    console.log("Creating link:", { url, alias });
+    alert(`Link would be created here!\nURL: ${url}\nAlias: ${alias || 'auto-generated'}`);
+    setUrl("");
+    setAlias("");
+  };
+
   return (
     <>
       <Header />
       <div className="min-h-screen bg-linear-to-br from-amber-950/25 via-rose-500/25 to-amber-950/25 p-8">
-        <form className="bg-black/40 backdrop-blur-sm p-6 rounded-2xl shadow mb-8 space-y-4 border border-rose-500/20">
+        {/* ===== CREATE LINK FORM (SUBMIT TO: POST /api/links) ===== */}
+        <form 
+          onSubmit={handleSubmit}
+          className="bg-black/40 backdrop-blur-sm p-6 rounded-2xl shadow mb-8 space-y-4 border border-rose-500/20"
+        >
           <div>
             <label className="block text-cream font-medium mb-1">Enter a URL to shorten</label>
             <input
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="w-full border border-red-500 text-cream rounded-lg p-2 focus:border-red-900 focus:outline-none placeholder-cream/50"
+              placeholder="https://example.com/your-long-url"
+              className="w-full border border-red-500 bg-black/20 text-cream rounded-lg p-2 focus:border-red-900 focus:outline-none placeholder-cream/50"
               required
             />
           </div>
@@ -82,16 +238,18 @@ export default function Dashboard() {
           </div>
         </form>
 
+        {/* ===== SEARCH BAR ===== */}
         <div className="flex justify-between items-center mb-4">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search links..."
-            className="border border-red-500 text-cream rounded-lg p-2 focus:border-red-900 w-1/3 focus:outline-none placeholder-cream/50"
+            className="border border-red-500 bg-black/20 text-cream rounded-lg p-2 focus:border-red-900 w-1/3 focus:outline-none placeholder-cream/50"
           />
         </div>
 
+        {/* ===== LINKS TABLE (FROM: GET /api/links) ===== */}
         <div className="overflow-x-auto">
           <table className="min-w-full bg-black/40 backdrop-blur-sm rounded-2xl shadow border border-rose-500/20">
             <thead className="bg-rose-500/80 border-b border-rose-500/30">
@@ -131,6 +289,20 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
+
+        {/* ===== PAGINATION (Use nextCursor from GET /api/links response) ===== */}
+        {/* 
+        {nextCursor && (
+          <div className="mt-6 text-center">
+            <button 
+              onClick={loadMore}
+              className="bg-rose-500 text-cream px-6 py-2 rounded-lg hover:bg-rose-600 transition"
+            >
+              Load More
+            </button>
+          </div>
+        )}
+        */}
       </div>
     </>
   );
