@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb"
 
 export interface LinkRedirect {
-  _id: string
+  _id: string //slug
   uid: string
   target: string
   name: string
@@ -10,7 +10,7 @@ export interface LinkRedirect {
 }
 
 export interface LinkAnalytics {
-  _id: string
+  _id: string //slug
   totalClicks: number
   uniqueClicks: number
   clicksByRegion: Record<string, number>
@@ -33,4 +33,11 @@ export interface ClickLog {
   country?: string
   ua?: string
   referrer?: string
+}
+
+export interface UserAnalytics {
+  _id: string //uid
+  totalClicks: number
+  clicksByRegion: Record<string, number>
+  clicksByDevice: Record<string, number>
 }
