@@ -1,5 +1,6 @@
 import express from "express";
 import admin from "firebase-admin"
+import cors from "cors";
 import serviceAccount from "./serviceAccountKey.json"
 import linksRouter from "./routes/links";
 import analyticsRouter from "./routes/analytics";
@@ -12,10 +13,18 @@ admin.initializeApp({
 });
 
 const app = express();
+
+//allow localhost for dev
+if (process.env.NODE_ENV !== "production") {
+  app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+}
+
 app.use(express.json());
 
 // verify auth via firebase
 app.use("/api", async (req: any, res, next) => {
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  
   const header = req.headers.authorization || "";
   const match = header.match(/^Bearer (.+)$/);
 
