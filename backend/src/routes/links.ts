@@ -6,9 +6,9 @@ const router = express.Router();
 
 router.get("/", async (req, res) => { });
 
-router.post("/", async (req, res) => {
+router.post("/", async (req: any, res) => {
   try {
-    const uid: string = req.uid;
+    const uid: string = req.uid!;
 
     const { redirect, name, slug } = req.body as {
       redirect?: string;

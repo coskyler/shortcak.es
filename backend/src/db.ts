@@ -13,7 +13,7 @@ export async function connectDB() {
   }
 
   // initialize timeseries collection & indices
-  if(!initialized) {
+  if (!initialized) {
     await initDb(db);
     initialized = true;
   }
@@ -54,6 +54,9 @@ async function initDb(db: Db) {
   // clickLogs: 7 day document TTL
   await clickLogs.createIndex(
     { timeStamp: 1 },
-    { expireAfterSeconds: 7 * 24 * 60 * 60 }
+    {
+      expireAfterSeconds: 7 * 24 * 60 * 60,
+      partialFilterExpression: { link: { $exists: true } },
+    },
   );
 }

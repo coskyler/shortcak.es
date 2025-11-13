@@ -15,7 +15,7 @@ const app = express();
 app.use(express.json());
 
 // verify auth via firebase
-app.use(async (req, res, next) => {
+app.use("/api", async (req: any, res, next) => {
   const header = req.headers.authorization || "";
   const match = header.match(/^Bearer (.+)$/);
 
