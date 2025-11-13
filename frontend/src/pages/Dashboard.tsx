@@ -3,7 +3,7 @@ import Header from "../components/Header";
 import axios from 'axios';
 import { auth } from "../lib/firebase";
 
-const BASE_URL = 'http://localhost:80';
+const BASE_URL = 'http://localhost:8084';
 
 const client = axios.create({
   baseURL: BASE_URL,
@@ -11,8 +11,6 @@ const client = axios.create({
     'Content-Type': 'application/json'
   }
 });
-
-
 
 // Interceptor: Automatically adds Firebase auth token to all API requests
 client.interceptors.request.use(async (config) => {
