@@ -3,7 +3,7 @@ import Header from "../components/Header";
 import axios from 'axios';
 import { auth } from "../lib/firebase";
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://localhost:80';
 
 const client = axios.create({
   baseURL: BASE_URL,
@@ -202,20 +202,26 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     // Step 2: Call the createLink API function
     // - First parameter: the URL to shorten (from the url state)
-    // - Second parameter: a name for the link (hardcoded as "New Link" for now)
+    // - Second parameter: a name for the link (we have to add another input field in the dashboard.)
     // - Third parameter: custom alias if provided, or null for auto-generated
     const response = await createLink(url, "New Link", alias || null);
     
-    //success message to the user
-    alert(`Link created successfully! Your short link: ${window.location.origin}/r/${response.data.slug}`);
+    // Step 3: Show success message to the user
+
+    alert(`Link created successfully! Your short link: ${window.location.origin}/r/${response.data._id}`);
     
-    //Clear the form inputs after successful creation
+    // Step 4: Clear the form inputs after successful creation
     setUrl('');
     setAlias('');
+    //setName('');
     
-  } catch (error) {
+  } catch (error: any) {
+    // Step 5: Handle any errors that occur
     console.error('Failed to create link:', error);
-    alert('Failed to create link.');
+    
+    // Show user-friendly error message from backend
+    const errorMessage = error.response?.data?.error || 'Failed to create link';
+    alert(errorMessage);
   }
 };
 
