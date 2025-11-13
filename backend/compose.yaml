@@ -8,7 +8,6 @@ services:
       CHOKIDAR_USEPOLLING: "true" # needed on Docker Desktop for nodemon to work
     env_file: .env
     volumes:
-      - /usr/src/app/node_modules
       - ./src:/usr/src/app/src
     ports:
       - "${WEB_PORT}:80"
