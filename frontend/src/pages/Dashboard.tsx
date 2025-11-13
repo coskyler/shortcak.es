@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from "react";
 import Header from "../components/Header";
-// import axios from 'axios';
+import axios from 'axios';
+import { auth } from "../lib/firebase";
 
-// ===== AXIOS API CALLS (Uncomment when backend is ready) =====
-/*
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const BASE_URL = 'http://localhost:5000';
 
 const client = axios.create({
   baseURL: BASE_URL,
@@ -13,31 +12,33 @@ const client = axios.create({
   }
 });
 
-// Add auth token to every request
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
+
+
+// Interceptor: Automatically adds Firebase auth token to all API requests
+client.interceptors.request.use(async (config) => {
+  const user = auth.currentUser;
+  if (user) {
+    const token = await user.getIdToken();
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
 // Get list of links with pagination
-const getLinks = (limit = 25, cursor = null) =>
-  client.get('/api/links', { params: { limit, ...(cursor && { cursor }) } });
+// const getLinks = (limit = 25, cursor = null) =>
+//   client.get('/api/links', { params: { limit, ...(cursor && { cursor }) } });
 
 // Create a new short link
-const createLink = (redirect: string, name: string, slug = null) =>
+const createLink = (redirect: string, name: string, slug: string | null = null) =>
   client.post('/api/links', { redirect, name, ...(slug && { slug }) });
 
 // Update link name
-const updateLink = (slug: string, name: string) =>
-  client.patch('/api/links', { slug, name });
+// const updateLink = (slug: string, name: string) =>
+//   client.patch('/api/links', { slug, name });
 
 // Delete a link
-const deleteLink = (slug: string) =>
-  client.delete('/api/links', { data: { slug } });
-*/
+// const deleteLink = (slug: string) =>
+//   client.delete('/api/links', { data: { slug } });
 
 // ===== HOW TO USE (Example implementation) =====
 /*
@@ -191,15 +192,32 @@ export default function Dashboard() {
     }
   };
 
-  // ===== FORM SUBMISSION (Use: POST /api/links) =====
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Replace with createLink(url, "New Link", alias || null)
-    console.log("Creating link:", { url, alias });
-    alert(`Link would be created here!\nURL: ${url}\nAlias: ${alias || 'auto-generated'}`);
-    setUrl("");
-    setAlias("");
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  // Step 1: Prevent the default form submission behavior
+  // (which would reload the page)
+  e.preventDefault();
+  
+  try {
+    console.log(url, alias)
+
+    // Step 2: Call the createLink API function
+    // - First parameter: the URL to shorten (from the url state)
+    // - Second parameter: a name for the link (hardcoded as "New Link" for now)
+    // - Third parameter: custom alias if provided, or null for auto-generated
+    const response = await createLink(url, "New Link", alias || null);
+    
+    //success message to the user
+    alert(`Link created successfully! Your short link: ${window.location.origin}/r/${response.data.slug}`);
+    
+    //Clear the form inputs after successful creation
+    setUrl('');
+    setAlias('');
+    
+  } catch (error) {
+    console.error('Failed to create link:', error);
+    alert('Failed to create link.');
+  }
+};
 
   return (
     <>
