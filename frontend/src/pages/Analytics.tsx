@@ -1,111 +1,123 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import Header from "../components/Header";
-// import axios from 'axios';
+import axios from "axios";
+import { auth } from "../lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
-// ===== AXIOS API CALLS (Uncomment when backend is ready) =====
-/*
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+//change to normal fetch
+// ===== AXIOS API CALLS =====
+const BASE_URL = "http://localhost:8084";
 
 const client = axios.create({
   baseURL: BASE_URL,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    "Content-Type": "application/json",
+  },
 });
 
-// Add auth token to every request
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
+client.interceptors.request.use(async (config) => {
+  const user = auth.currentUser;
+  if (user) {
+    const token = await user.getIdToken();
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Get overall aggregates (top 3 cards)
-const getAggregates = () =>
-  client.get('/api/aggregates');
-
-// Get metrics for specific link (total/unique clicks)
+// Get metrics for specific link (total/unique clicks + name)
 const getMetrics = (slug: string) =>
   client.get(`/api/analytics/${slug}/metrics`);
 
-// Get daily timeseries data
+// Get daily timeseries data (mapped to your clicksbyday endpoint)
 const getTimeseries = (slug: string) =>
-  client.get(`/api/analytics/${slug}/timeseries`);
+  client.get(`/api/analytics/${slug}/clicksbyday`);
 
-// Get clicks by country
+// Get clicks by country (mapped to your clicksbycountry endpoint)
 const getGeographics = (slug: string) =>
-  client.get(`/api/analytics/${slug}/geographics`);
+  client.get(`/api/analytics/${slug}/clicksbycountry`);
 
-// Get individual click logs
-const getClicks = (slug: string, limit = 50, cursor = null) =>
-  client.get(`/api/analytics/${slug}/clicks`, { params: { limit, ...(cursor && { cursor }) } });
-*/
-
-//implementation
-/*
-useEffect(() => {
-  const fetchAnalytics = async () => {
-    try {
-      // Fetch aggregates
-      const aggregatesRes = await getAggregates();
-      setAggregates(aggregatesRes.data);
-
-      // Fetch data for selected link
-      const [metricsRes, timeseriesRes, geoRes, clicksRes] = await Promise.all([
-        getMetrics(selectedLink),
-        getTimeseries(selectedLink),
-        getGeographics(selectedLink),
-        getClicks(selectedLink, 50)
-      ]);
-
-      setMetrics(metricsRes.data);
-      setTimeseries(timeseriesRes.data);
-      setGeographics(geoRes.data);
-      setClickLogs(clicksRes.data.items);
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-    }
-  };
-
-  fetchAnalytics();
-}, [selectedLink]); // Re-fetch when user changes selected link
-*/
+const getClickLogs = (slug: string) =>
+  client.get(`/api/analytics/${slug}/clicks`);
 
 export default function Analytics() {
-  const [selectedLink, setSelectedLink] = useState<string>("promo");
+  // Get slug from URL params (e.g., /analytics/:slug)
+  const { slug } = useParams<{ slug: string }>();
 
-  // ===== DUMMY DATA (Replace with real API calls above) =====
-  // FROM: GET /api/aggregates
-  const aggregates = { 
-    totalLinks: 12, 
-    totalClicks: 18234, 
-    uniqueVisitors: 9670 
-  };
+  // State for API data
+  const [metrics, setMetrics] = useState({
+    name: "",
+    totalClicks: 0,
+    uniqueClicks: 0,
+  });
+  const [timeseries, setTimeseries] = useState<
+    Array<{ date: string; clicks: number }>
+  >([]);
+  const [geographics, setGeographics] = useState<
+    Array<{ country: string; clicks: number }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
+  const [clickLogs, setClickLogs] = useState<Array<any>>([]);
 
-  // FROM: GET /api/analytics/:slug/metrics
-  const metrics = { 
-    totalClicks: 2456, 
-    uniqueClicks: 1893 
-  };
+  // Wait for Firebase auth to initialize
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAuthReady(true);
+      } else {
+        console.error("User not authenticated");
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
-  // FROM: GET /api/analytics/:slug/timeseries
-  const timeseries = [
-    { date: "2025-10-01", clicks: 42 },
-    { date: "2025-10-02", clicks: 55 },
-    { date: "2025-10-03", clicks: 61 },
-  ];
+  // Fetch data when auth is ready and slug is available
+  useEffect(() => {
+    if (!slug || !authReady) return;
 
-  // FROM: GET /api/analytics/:slug/geographics
-  const geographics = [
-    { country: "US", clicks: 180 },
-    { country: "CA", clicks: 40 },
-    { country: "GB", clicks: 35 },
-  ];
+    const fetchAnalytics = async () => {
+      setLoading(true);
+      try {
+        // Fetch metrics (name, totalClicks, uniqueClicks)
+        const metricsRes = await getMetrics(slug);
+        setMetrics(metricsRes.data);
 
-  // FROM: GET /api/analytics/:slug/clicks?limit=50
-  const clickLogs = [
+        // Fetch timeseries (clicks by day)
+        const timeseriesRes = await getTimeseries(slug);
+        setTimeseries(timeseriesRes.data);
+
+        // Fetch geographics (clicks by country)
+        const geoRes = await getGeographics(slug);
+        // Convert object { "US": 180, "CA": 40 } to array [{ country: "US", clicks: 180 }]
+        const geoArray = Object.entries(geoRes.data).map(
+          ([country, clicks]) => ({
+            country,
+            clicks: clicks as number,
+          })
+        );
+        setGeographics(geoArray);
+
+        // Add to fetchAnalytics function
+        const clickLogsRes = await getClickLogs(slug);
+        setClickLogs(clickLogsRes.data);
+
+        console.log("geo array", geoArray);
+        console.log("time series", timeseriesRes);
+        console.log("clicks log", clickLogsRes);
+      } catch (error) {
+        console.error("Failed to fetch analytics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [slug, authReady]); // Re-fetch when slug changes or auth becomes ready
+
+  // ===== DUMMY DATA (Now replaced by real API data above) =====
+  /*const clickLogs = [
     {
       ip: "203.0.113.1",
       referrer: "https://news.com/",
@@ -118,40 +130,28 @@ export default function Analytics() {
       country: "CA",
       timestamp: "2025-11-01T09:00:00Z",
     },
-  ];
+  ];*/
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gradient-to-br from-amber-950/25 via-rose-500/25 to-amber-950/25 p-8 text-cream flex items-center justify-center">
+          <div className="text-2xl">Loading analytics...</div>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
       <Header />
       <main className="min-h-screen bg-gradient-to-br from-amber-950/25 via-rose-500/25 to-amber-950/25 p-8 text-cream">
-        {/* ===== Aggregates Summary (FROM: GET /api/aggregates) ===== */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-black/40 border border-rose-500/20 rounded-2xl p-6 text-center shadow">
-            <h3 className="text-lg font-semibold">Total Links</h3>
-            <p className="text-3xl font-bold">{aggregates.totalLinks}</p>
-          </div>
-          <div className="bg-black/40 border border-rose-500/20 rounded-2xl p-6 text-center shadow">
-            <h3 className="text-lg font-semibold">Total Clicks</h3>
-            <p className="text-3xl font-bold">{aggregates.totalClicks}</p>
-          </div>
-          <div className="bg-black/40 border border-rose-500/20 rounded-2xl p-6 text-center shadow">
-            <h3 className="text-lg font-semibold">Unique Visitors</h3>
-            <p className="text-3xl font-bold">{aggregates.uniqueVisitors}</p>
-          </div>
-        </section>
-
         {/* ===== Selected Link Details ===== */}
         <section className="bg-black/40 border border-rose-500/20 rounded-2xl p-6 mb-10 shadow">
-          <label className="block font-medium mb-2">Select Link:</label>
-          <select
-            value={selectedLink}
-            onChange={(e) => setSelectedLink(e.target.value)}
-            className="w-1/3 border border-rose-500/30 bg-black/20 text-cream rounded-lg p-2 focus:border-rose-500 focus:outline-none mb-6"
-          >
-            <option value="promo">Promo</option>
-            <option value="blog">Blog</option>
-            <option value="signup">Sign Up</option>
-          </select>
+          <label className="block font-medium mb-2">
+            Link: {metrics.name || slug}
+          </label>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Total and Unique Clicks (FROM: GET /api/analytics/:slug/metrics) */}
@@ -168,25 +168,35 @@ export default function Analytics() {
             <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10 col-span-1 md:col-span-1">
               <h4 className="font-semibold mb-2">Top Countries</h4>
               <ul className="space-y-1 text-sm">
-                {geographics.map((geo, idx) => (
-                  <li key={idx} className="flex justify-between">
-                    <span>{geo.country}</span>
-                    <span className="text-rose-300">{geo.clicks} clicks</span>
-                  </li>
-                ))}
+                {geographics.length > 0 ? (
+                  geographics.map((geo, idx) => (
+                    <li key={idx} className="flex justify-between">
+                      <span>{geo.country}</span>
+                      <span className="text-rose-300">{geo.clicks} clicks</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-cream/50">No data available</li>
+                )}
               </ul>
             </div>
 
             {/* Clicks Over Time (FROM: GET /api/analytics/:slug/timeseries) */}
             <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10 col-span-1 md:col-span-1">
-              <h4 className="font-semibold mb-2">Recent Days (Clicks Over Time)</h4>
+              <h4 className="font-semibold mb-2">
+                Recent Days (Clicks Over Time)
+              </h4>
               <ul className="space-y-1 text-sm">
-                {timeseries.map((t, idx) => (
-                  <li key={idx} className="flex justify-between">
-                    <span>{t.date}</span>
-                    <span className="text-rose-300">{t.clicks}</span>
-                  </li>
-                ))}
+                {timeseries.length > 0 ? (
+                  timeseries.map((t, idx) => (
+                    <li key={idx} className="flex justify-between">
+                      <span>{t.date}</span>
+                      <span className="text-rose-300">{t.clicks}</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-cream/50">No data available</li>
+                )}
               </ul>
             </div>
           </div>
@@ -207,12 +217,19 @@ export default function Analytics() {
               </thead>
               <tbody>
                 {clickLogs.map((log, idx) => (
-                  <tr key={idx} className="border-b border-rose-500/10 hover:bg-rose-500/10">
-                    <td className="py-3 px-4">{log.ip}</td>
-                    <td className="py-3 px-4 truncate max-w-xs">{log.referrer}</td>
+                  <tr
+                    key={idx}
+                    className="border-b border-rose-500/10 hover:bg-rose-500/10"
+                  >
+                    <td className="py-3 px-4">
+                      {log.ip?.replace("::ffff:", "") ?? "Unknown"}
+                    </td>{" "}
+                    <td className="py-3 px-4 truncate max-w-xs">
+                      {log.referrer}
+                    </td>
                     <td className="py-3 px-4">{log.country}</td>
                     <td className="py-3 px-4">
-                      {new Date(log.timestamp).toLocaleString()}
+                      {new Date(log.timeStamp).toLocaleString()}
                     </td>
                   </tr>
                 ))}
