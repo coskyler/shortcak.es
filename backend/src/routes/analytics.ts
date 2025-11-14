@@ -4,10 +4,29 @@ import { ClickLog, LinkAnalytics, DailyClick, LinkRedirect } from "../types/docT
 
 const router = express.Router();
 
+async function verifyLinkOwnership(slug: string, uid: string) {
+  const db = await connectDB();
+  const linkRedirects = db.collection<LinkRedirect>("linkRedirects");
+
+  const doc = await linkRedirects.findOne(
+    { _id: slug, uid },
+    { projection: { _id: 1, uid: 1, name: 1, target: 1, deleted: 1 } }
+  );
+
+  if (!doc || doc.deleted) return null;
+  return doc;
+}
+
 // all daily click history for this link
-router.get("/:slug/clicksbyday", async (req, res) => {
+router.get("/:slug/clicksbyday", async (req: any, res) => {
   try {
     const { slug } = req.params;
+
+    const ownerDoc = await verifyLinkOwnership(slug, req.uid);
+
+    if (!ownerDoc) {
+      return res.status(404).json({ error: "Not found or unauthorized" });
+    }
 
     const db = await connectDB();
     const dailyClicks = db.collection<DailyClick>("dailyClicks");
@@ -25,9 +44,15 @@ router.get("/:slug/clicksbyday", async (req, res) => {
 });
 
 // clicks by country
-router.get("/:slug/clicksbycountry", async (req, res) => {
+router.get("/:slug/clicksbycountry", async (req: any, res) => {
   try {
     const { slug } = req.params;
+
+    const ownerDoc = await verifyLinkOwnership(slug, req.uid);
+
+    if (!ownerDoc) {
+      return res.status(404).json({ error: "Not found or unauthorized" });
+    }
 
     const db = await connectDB();
     const linkAnalytics = db.collection<LinkAnalytics>("linkAnalytics");
@@ -45,9 +70,15 @@ router.get("/:slug/clicksbycountry", async (req, res) => {
 });
 
 // clicks by device
-router.get("/:slug/clicksbydevice", async (req, res) => {
+router.get("/:slug/clicksbydevice", async (req: any, res) => {
   try {
     const { slug } = req.params;
+
+    const ownerDoc = await verifyLinkOwnership(slug, req.uid);
+
+    if (!ownerDoc) {
+      return res.status(404).json({ error: "Not found or unauthorized" });
+    }
 
     const db = await connectDB();
     const linkAnalytics = db.collection<LinkAnalytics>("linkAnalytics");
@@ -65,9 +96,15 @@ router.get("/:slug/clicksbydevice", async (req, res) => {
 });
 
 // click logs for this link
-router.get("/:slug/clicks", async (req, res) => {
+router.get("/:slug/clicks", async (req: any, res) => {
   try {
     const { slug } = req.params;
+
+    const ownerDoc = await verifyLinkOwnership(slug, req.uid);
+
+    if (!ownerDoc) {
+      return res.status(404).json({ error: "Not found or unauthorized" });
+    }
 
     const db = await connectDB();
     const clickLogs = db.collection<ClickLog>("clickLogs");
@@ -85,28 +122,26 @@ router.get("/:slug/clicks", async (req, res) => {
 });
 
 // name, total and unique clicks for this link
-router.get("/:slug/metrics", async (req, res) => {
+router.get("/:slug/metrics", async (req: any, res) => {
   try {
     const { slug } = req.params;
 
+    const ownerDoc = await verifyLinkOwnership(slug, req.uid);
+
+    if (!ownerDoc) {
+      return res.status(404).json({ error: "Not found or unauthorized" });
+    }
+
     const db = await connectDB();
     const linkAnalytics = db.collection<LinkAnalytics>("linkAnalytics");
-    const linkRedirects = db.collection<LinkRedirect>("linkRedirects");
 
-    // get metrics
     const analytics = await linkAnalytics.findOne(
       { _id: slug },
       { projection: { totalClicks: 1, uniqueClicks: 1 } }
     );
 
-    // get name
-    const meta = await linkRedirects.findOne(
-      { _id: slug },
-      { projection: { name: 1 } }
-    );
-
     return res.json({
-      name: meta?.name ?? null,
+      name: ownerDoc.name ?? null,
       totalClicks: analytics?.totalClicks ?? 0,
       uniqueClicks: analytics?.uniqueClicks ?? 0,
     });
