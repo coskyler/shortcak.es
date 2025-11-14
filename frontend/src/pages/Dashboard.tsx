@@ -12,12 +12,16 @@ const client = axios.create({
   }
 });
 
-// Interceptor: Automatically adds Firebase auth token to all API requests
+// Interceptor: Automatically adds Firebase auth token to API requests
+// BUT excludes the /r/ redirect endpoint (which should be public)
 client.interceptors.request.use(async (config) => {
-  const user = auth.currentUser;
-  if (user) {
-    const token = await user.getIdToken();
-    config.headers.Authorization = `Bearer ${token}`;
+  // Only add auth token for /api/ routes, not for /r/ redirect routes
+  if (config.url?.startsWith('/api/')) {
+    const user = auth.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
