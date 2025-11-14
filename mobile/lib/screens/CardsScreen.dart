@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../utils/GlobalData.dart';import '../utils/getAPI.dart';
 
 class CardsScreen extends StatefulWidget {
+  const CardsScreen({super.key});
+
   @override
   _CardsScreenState createState() => _CardsScreenState();
 }
@@ -27,6 +29,8 @@ class _CardsScreenState extends State<CardsScreen> {
 }
 
 class MainPage extends StatefulWidget {
+  const MainPage({super.key});
+
   @override
   _MainPageState createState() => _MainPageState();
 }
@@ -77,7 +81,7 @@ class _MainPageState extends State<MainPage> {
                   Expanded(
                     child: Column(
                         children: <Widget>[
-                          Container(
+                          SizedBox(
                             width: 200,
                             child:
                             TextField (
@@ -97,7 +101,7 @@ class _MainPageState extends State<MainPage> {
                           ),
                           Row(
                             children: <Widget>[
-                              Text('$searchMessage',style: TextStyle(fontSize: 14 ,color:Colors.black)),
+                              Text(searchMessage,style: TextStyle(fontSize: 14 ,color:Colors.black)),
                             ],
                           ),
 
@@ -105,14 +109,12 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ),
                   ElevatedButton(
-                      child: Text('Search',style: TextStyle(fontSize: 14 ,color:Colors.black)),
-
                       onPressed: () async
                       {
                         newSearchMessage = "";
                         changeSearchText();
 
-                        String payload = '{"userId":"' + GlobalData.userId.toString() + '","search":"' + search.trim() + '"}';
+                        String payload = '{"userId":"${GlobalData.userId}","search":"${search.trim()}"}';
 
                         var jsonObject;
                         try
@@ -152,7 +154,8 @@ class _MainPageState extends State<MainPage> {
                           backgroundColor: Colors.brown[50],
                           foregroundColor: Colors.black,
                           padding: EdgeInsets.all(8.0)
-                      )
+                      ),
+                      child: Text('Search',style: TextStyle(fontSize: 14 ,color:Colors.black))
                   )
 
                 ]
@@ -163,7 +166,7 @@ class _MainPageState extends State<MainPage> {
                   Expanded(
                     child: Column(
                       children: <Widget>[
-                        Container(
+                        SizedBox(
                           width: 200,
                           child:
                           TextField (
@@ -184,7 +187,7 @@ class _MainPageState extends State<MainPage> {
                         Row(
                           children: <Widget>[
                             Expanded(
-                              child: Text('$addMessage',style: TextStyle(fontSize: 14 ,color:Colors.black)),
+                              child: Text(addMessage,style: TextStyle(fontSize: 14 ,color:Colors.black)),
                             ),
 
                           ],
@@ -193,7 +196,6 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ),
                   ElevatedButton(
-                      child: Text('Add',style: TextStyle(fontSize: 14 ,color:Colors.black)),
                       onPressed: () async
                       {
                         newAddMessage = "";
@@ -234,7 +236,8 @@ class _MainPageState extends State<MainPage> {
                           backgroundColor: Colors.brown[50],
                           foregroundColor: Colors.black,
                           padding: EdgeInsets.all(8.0)
-                      )
+                      ),
+                      child: Text('Add',style: TextStyle(fontSize: 14 ,color:Colors.black))
                   )
 
                 ]
