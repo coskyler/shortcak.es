@@ -142,15 +142,19 @@ export default function Analytics() {
           <label className="block font-medium mb-2">Link: {metrics.name || slug}</label>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Total Clicks */}
             <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10">
               <h4 className="font-semibold mb-1">Total Clicks</h4>
               <p className="text-2xl">{metrics.totalClicks}</p>
             </div>
+
+            {/* Unique Clicks */}
             <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10">
               <h4 className="font-semibold mb-1">Unique Clicks</h4>
               <p className="text-2xl">{metrics.uniqueClicks}</p>
             </div>
 
+            {/* Top Countries */}
             <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10">
               <h4 className="font-semibold mb-2">Top Countries</h4>
               <ul className="space-y-1 text-sm">
@@ -167,6 +171,7 @@ export default function Analytics() {
               </ul>
             </div>
 
+            {/* Top Devices */}
             <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10">
               <h4 className="font-semibold mb-2">Top Devices</h4>
               <ul className="space-y-1 text-sm">
@@ -183,6 +188,7 @@ export default function Analytics() {
               </ul>
             </div>
 
+            {/* Clicks Over Time */}
             <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10 col-span-1 md:col-span-2">
               <h4 className="font-semibold mb-2">Clicks Over Time</h4>
               {timeseries.length > 0 ? (
@@ -220,6 +226,7 @@ export default function Analytics() {
           </div>
         </section>
 
+        {/* Recent Clicks */}
         <section className="bg-black/40 border border-rose-500/20 rounded-2xl p-6 shadow">
           <h3 className="text-xl font-semibold mb-4">Recent Clicks</h3>
           <div className="overflow-x-auto">
