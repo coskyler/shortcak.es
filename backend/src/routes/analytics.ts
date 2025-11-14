@@ -95,6 +95,33 @@ router.get("/:slug/clicksbydevice", async (req: any, res) => {
   }
 });
 
+// clicks by referrer
+router.get("/:slug/clicksbyreferrer", async (req: any, res) => {
+  try {
+    const { slug } = req.params;
+
+    const ownerDoc = await verifyLinkOwnership(slug, req.uid);
+
+    if (!ownerDoc) {
+      return res.status(404).json({ error: "Not found or unauthorized" });
+    }
+
+    const db = await connectDB();
+    const linkAnalytics = db.collection<LinkAnalytics>("linkAnalytics");
+
+    const analytics = await linkAnalytics.findOne(
+      { _id: slug },
+      { projection: { clicksByReferrer: 1, _id: 0 } }
+    );
+
+    return res.json(analytics?.clicksByReferrer || {});
+  } catch (err) {
+    console.error("clicksbyreferrer error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 // click logs for this link
 router.get("/:slug/clicks", async (req: any, res) => {
   try {

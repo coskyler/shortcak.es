@@ -55,11 +55,12 @@ router.get("/:slug", async (req, res) => {
           if (!referrerHeader) return "";
           try {
             const u = new URL(referrerHeader);
-            return u.hostname;
+            return u.hostname.replace(/\./g, "．"); // full-width dot to prevent unwanted nesting in mongodb
           } catch {
-            return referrerHeader;
+            return "";
           }
         })();
+
 
         // append clickLogs
         await clickLogs.insertOne({
