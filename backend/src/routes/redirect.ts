@@ -1,6 +1,7 @@
 import express from "express";
 import { connectDB } from "../db";
 import { LinkRedirect, ClickLog, LinkAnalytics, DailyClick, UserAnalytics } from "../types/docTypes";
+import geoip from "geoip-lite";
 
 const router = express.Router();
 
@@ -46,7 +47,8 @@ router.get("/:slug", async (req, res) => {
           req.socket.remoteAddress ||
           "";
 
-        const region = "unknown"; // need to implement geolookup
+        const geo = geoip.lookup(ip);
+        const region = geo?.country || "unknown";
         const device = /mobile|android|iphone|ipad/i.test(ua) ? "mobile" : "desktop";
 
         const referrerKey = (() => {
