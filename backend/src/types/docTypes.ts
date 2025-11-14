@@ -37,6 +37,7 @@ export interface ClickLog {
 
 export interface UserAnalytics {
   _id: string //uid
+  totalLinks: number
   totalClicks: number
   clicksByRegion: Record<string, number>
   clicksByDevice: Record<string, number>

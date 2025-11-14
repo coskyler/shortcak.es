@@ -1,7 +1,8 @@
 import express from "express";
-import admin from "firebase-admin"
+import admin from "firebase-admin";
 import cors from "cors";
-import serviceAccount from "./serviceAccountKey.json"
+import cookieParser from "cookie-parser";
+import serviceAccount from "./serviceAccountKey.json";
 import linksRouter from "./routes/links";
 import analyticsRouter from "./routes/analytics";
 import aggregatesRouter from "./routes/aggregates";
@@ -20,11 +21,11 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 app.use(express.json());
+app.use(cookieParser());
 
 // verify auth via firebase
 app.use("/api", async (req: any, res, next) => {
   if (req.method === "OPTIONS") return res.sendStatus(204);
-  
   const header = req.headers.authorization || "";
   const match = header.match(/^Bearer (.+)$/);
 
