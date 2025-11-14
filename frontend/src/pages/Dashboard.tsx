@@ -118,6 +118,7 @@ type SortKey = "name" | "clicks" | "short" | "date";
 type SortOrder = "asc" | "desc";
 
 export default function Dashboard() {
+  const [name, setName] = useState<string>("");
   const [url, setUrl] = useState<string>("");
   const [alias, setAlias] = useState<string>("");
   const [search, setSearch] = useState<string>("");
@@ -206,7 +207,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     // - First parameter: the URL to shorten (from the url state)
     // - Second parameter: a name for the link (we have to add another input field in the dashboard.)
     // - Third parameter: custom alias if provided, or null for auto-generated
-    const response = await createLink(url, "New Link", alias || null);
+    const response = await createLink(url, name, alias || null);
     
     // Step 3: Show success message to the user
 
@@ -215,7 +216,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     // Step 4: Clear the form inputs after successful creation
     setUrl('');
     setAlias('');
-    //setName('');
+    setName('');
     
   } catch (error: any) {
     // Step 5: Handle any errors that occur
@@ -237,16 +238,29 @@ const handleSubmit = async (e: React.FormEvent) => {
           className="bg-black/40 backdrop-blur-sm p-6 rounded-2xl shadow mb-8 space-y-4 border border-rose-500/20"
         >
           <div>
+            <label className="block text-cream font-medium mb-1">Enter a Name for this URL</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="ex. Dashboard"
+              className="w-full border border-red-500 bg-black/20 text-cream rounded-lg p-2 focus:border-red-900 focus:outline-none placeholder-cream/50"
+              required
+            />
+          </div>
+          <div>
             <label className="block text-cream font-medium mb-1">Enter a URL to shorten</label>
             <input
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com/your-long-url"
+              placeholder="ex. https://example.com/your-long-url"
               className="w-full border border-red-500 bg-black/20 text-cream rounded-lg p-2 focus:border-red-900 focus:outline-none placeholder-cream/50"
               required
             />
           </div>
+
+          <label className="block text-cream font-medium mb-1">Enter Custom Alias</label>
           <div className="flex gap-3 items-center">
             <input
               type="text"
