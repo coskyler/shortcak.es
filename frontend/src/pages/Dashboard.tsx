@@ -51,7 +51,7 @@ interface Link {
   name: string;
   target: string;
   createDate: string;
-  clicks?: number;
+  totalClicks?: number;
 }
 
 export default function Dashboard() {
@@ -63,11 +63,28 @@ export default function Dashboard() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [links, setLinks] = useState<Link[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [authReady, setAuthReady] = useState<boolean>(false);
 
-  // Fetch links on component mount
+  // Wait for Firebase auth to be ready
   useEffect(() => {
-    fetchLinks();
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setAuthReady(true);
+      } else {
+        setAuthReady(false);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  // Fetch links only after auth is ready
+  useEffect(() => {
+    if (authReady) {
+      fetchLinks();
+    }
+  }, [authReady]);
 
   const fetchLinks = async () => {
     try {
@@ -98,8 +115,8 @@ export default function Dashboard() {
         valA = a._id;
         valB = b._id;
       } else if (sortBy === "clicks") {
-        valA = a.clicks || 0;
-        valB = b.clicks || 0;
+        valA = a.totalClicks || 0;
+        valB = b.totalClicks || 0;
       }
       
       if (typeof valA === "string" && typeof valB === "string") {
@@ -268,7 +285,7 @@ export default function Dashboard() {
                 filteredLinks.map((link) => (
                   <tr key={link._id} className="border-b border-rose-500/10 hover:bg-rose-500/10">
                     <td className="py-3 px-4 text-cream">{link.name}</td>
-                    <td className="py-3 px-4 text-cream">{link.clicks || 0}</td>
+                    <td className="py-3 px-4 text-cream">{link.totalClicks || 0}</td>
                     <td className="py-3 px-4 text-rose-400 cursor-pointer hover:text-rose-300">
                       {window.location.origin}/r/{link._id}
                     </td>
