@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import axios from 'axios';
 import { auth } from "../lib/firebase";
@@ -55,6 +56,7 @@ interface Link {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [name, setName] = useState<string>("");
   const [url, setUrl] = useState<string>("");
   const [alias, setAlias] = useState<string>("");
@@ -284,10 +286,21 @@ export default function Dashboard() {
               ) : (
                 filteredLinks.map((link) => (
                   <tr key={link._id} className="border-b border-rose-500/10 hover:bg-rose-500/10">
-                    <td className="py-3 px-4 text-cream">{link.name}</td>
+                    <td 
+                      className="py-3 px-4 text-cream cursor-pointer hover:text-rose-300 hover:underline"
+                      onClick={() => navigate(`/analytics/${link._id}`)}
+                    >
+                      {link.name}
+                    </td>
                     <td className="py-3 px-4 text-cream">{link.totalClicks || 0}</td>
                     <td className="py-3 px-4 text-rose-400 cursor-pointer hover:text-rose-300">
-                      {window.location.origin}/r/{link._id}
+                      <a 
+                        href={`http://localhost:8084/r/${link._id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {/*window.location.origin*/}localhost:8084/r/{link._id}
+                      </a>
                     </td>
                     <td className="py-3 px-4 text-cream truncate max-w-xs">{link.target}</td>
                     <td className="py-3 px-4 text-cream">
@@ -296,13 +309,13 @@ export default function Dashboard() {
                     <td className="py-3 px-4">
                       <button
                         onClick={() => handleUpdate(link._id, link.name)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600 transition"
+                        className="text-white px-3 py-1 rounded mr-2 hover:bg-yellow-600 transition"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(link._id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                        className=" text-white px-3 py-1 rounded hover:bg-red-600 transition"
                       >
                         Delete
                       </button>
