@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Header from "../components/Header";
 import axios from 'axios';
 import { auth } from "../lib/firebase";
@@ -26,96 +26,33 @@ client.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Get list of links with pagination
-// const getLinks = (limit = 25, cursor = null) =>
-//   client.get('/api/links', { params: { limit, ...(cursor && { cursor }) } });
+// Get list of links
+const getLinks = () =>
+  client.get('/api/links');
 
 // Create a new short link
 const createLink = (redirect: string, name: string, slug: string | null = null) =>
   client.post('/api/links', { redirect, name, ...(slug && { slug }) });
 
 // Update link name
-// const updateLink = (slug: string, name: string) =>
-//   client.patch('/api/links', { slug, name });
+const updateLink = (slug: string, name: string) =>
+  client.patch('/api/links', { slug, name });
 
 // Delete a link
-// const deleteLink = (slug: string) =>
-//   client.delete('/api/links', { data: { slug } });
+const deleteLink = (slug: string) =>
+  client.delete('/api/links', { data: { slug } });
 
-// ===== HOW TO USE (Example implementation) =====
-/*
-// Fetch links on component mount
-useEffect(() => {
-  const fetchLinks = async () => {
-    try {
-      const response = await getLinks(25);
-      setLinks(response.data.items);
-      setNextCursor(response.data.nextCursor);
-    } catch (error) {
-      console.error('Failed to fetch links:', error);
-    }
-  };
-  fetchLinks();
-}, []);
-
-// Handle form submission
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    const response = await createLink(url, "New Link", alias || null);
-    alert(`Link created: ${window.location.origin}/r/${response.data.slug}`);
-    setUrl('');
-    setAlias('');
-    // Refresh links list
-    const linksRes = await getLinks(25);
-    setLinks(linksRes.data.items);
-  } catch (error) {
-    console.error('Failed to create link:', error);
-    alert('Failed to create link');
-  }
-};
-
-// Load more links (pagination)
-const loadMore = async () => {
-  if (nextCursor) {
-    try {
-      const response = await getLinks(25, nextCursor);
-      setLinks([...links, ...response.data.items]);
-      setNextCursor(response.data.nextCursor);
-    } catch (error) {
-      console.error('Failed to load more links:', error);
-    }
-  }
-};
-
-// Delete a link
-const handleDelete = async (slug: string) => {
-  if (!window.confirm('Delete this link?')) return;
-  try {
-    await deleteLink(slug);
-    setLinks(links.filter(link => link.slug !== slug));
-  } catch (error) {
-    console.error('Failed to delete link:', error);
-  }
-};
-
-// Update link name
-const handleRename = async (slug: string, currentName: string) => {
-  const newName = prompt('Enter new name:', currentName);
-  if (!newName || newName === currentName) return;
-  try {
-    await updateLink(slug, newName);
-    setLinks(links.map(link => 
-      link.slug === slug ? { ...link, name: newName } : link
-    ));
-  } catch (error) {
-    console.error('Failed to update link:', error);
-  }
-};
-*/
 
 type SortKey = "name" | "clicks" | "short" | "date";
 type SortOrder = "asc" | "desc";
+
+interface Link {
+  _id: string;
+  name: string;
+  target: string;
+  createDate: string;
+  clicks?: number;
+}
 
 export default function Dashboard() {
   const [name, setName] = useState<string>("");
@@ -124,59 +61,47 @@ export default function Dashboard() {
   const [search, setSearch] = useState<string>("");
   const [sortBy, setSortBy] = useState<SortKey>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [links, setLinks] = useState<Link[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // ===== DUMMY DATA (Replace with real API call: GET /api/links) =====
-  const links = [
-    { 
-      name: "Homepage", 
-      clicks: 1234, 
-      short: "bit.ly/home123", 
-      target: "https://example.com", 
-      date: "2024-11-01" 
-    },
-    { 
-      name: "Product Page", 
-      clicks: 856, 
-      short: "bit.ly/prod456", 
-      target: "https://example.com/products", 
-      date: "2024-11-03" 
-    },
-    { 
-      name: "Contact Us", 
-      clicks: 432, 
-      short: "bit.ly/contact", 
-      target: "https://example.com/contact", 
-      date: "2024-11-05" 
-    },
-    { 
-      name: "Blog Post - AI Trends", 
-      clicks: 2103, 
-      short: "bit.ly/ai2024", 
-      target: "https://example.com/blog/ai-trends-2024", 
-      date: "2024-10-28" 
-    },
-    { 
-      name: "Sign Up", 
-      clicks: 567, 
-      short: "bit.ly/signup", 
-      target: "https://example.com/register", 
-      date: "2024-11-08" 
-    },
-  ];
+  // Fetch links on component mount
+  useEffect(() => {
+    fetchLinks();
+  }, []);
+
+  const fetchLinks = async () => {
+    try {
+      setLoading(true);
+      const response = await getLinks();
+      setLinks(response.data);
+    } catch (error) {
+      console.error('Failed to fetch links:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter + Sort
   const filteredLinks = useMemo(() => {
     const result = links.filter((link) =>
       link.name.toLowerCase().includes(search.toLowerCase()) ||
-      link.short.toLowerCase().includes(search.toLowerCase())
+      link._id.toLowerCase().includes(search.toLowerCase())
     );
     return [...result].sort((a, b) => {
-      let valA = a[sortBy];
-      let valB = b[sortBy];
+      let valA: any = a[sortBy as keyof Link];
+      let valB: any = b[sortBy as keyof Link];
+      
       if (sortBy === "date") {
-        valA = new Date(a.date).getTime();
-        valB = new Date(b.date).getTime();
+        valA = new Date(a.createDate).getTime();
+        valB = new Date(b.createDate).getTime();
+      } else if (sortBy === "short") {
+        valA = a._id;
+        valB = b._id;
+      } else if (sortBy === "clicks") {
+        valA = a.clicks || 0;
+        valB = b.clicks || 0;
       }
+      
       if (typeof valA === "string" && typeof valB === "string") {
         return sortOrder === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
       } else if (typeof valA === "number" && typeof valB === "number") {
@@ -195,38 +120,53 @@ export default function Dashboard() {
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  // Step 1: Prevent the default form submission behavior
-  // (which would reload the page)
-  e.preventDefault();
-  
-  try {
-    console.log(url, alias)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await createLink(url, name, alias || null);
+      alert(`Link created successfully! Your short link: ${window.location.origin}/r/${response.data._id}`);
+      
+      setUrl('');
+      setAlias('');
+      setName('');
+      
+      // Refresh the links list
+      await fetchLinks();
+      
+    } catch (error: any) {
+      console.error('Failed to create link:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to create link';
+      alert(errorMessage);
+    }
+  };
 
-    // Step 2: Call the createLink API function
-    // - First parameter: the URL to shorten (from the url state)
-    // - Second parameter: a name for the link (we have to add another input field in the dashboard.)
-    // - Third parameter: custom alias if provided, or null for auto-generated
-    const response = await createLink(url, name, alias || null);
+  const handleDelete = async (slug: string) => {
+    if (!window.confirm('Are you sure you want to delete this link?')) return;
     
-    // Step 3: Show success message to the user
+    try {
+      await deleteLink(slug);
+      // Refresh the links list
+      await fetchLinks();
+    } catch (error) {
+      console.error('Failed to delete link:', error);
+      alert('Failed to delete link');
+    }
+  };
 
-    alert(`Link created successfully! Your short link: ${window.location.origin}/r/${response.data._id}`);
+  const handleUpdate = async (slug: string, currentName: string) => {
+    const newName = prompt('Enter new name:', currentName);
+    if (!newName || newName === currentName) return;
     
-    // Step 4: Clear the form inputs after successful creation
-    setUrl('');
-    setAlias('');
-    setName('');
-    
-  } catch (error: any) {
-    // Step 5: Handle any errors that occur
-    console.error('Failed to create link:', error);
-    
-    // Show user-friendly error message from backend
-    const errorMessage = error.response?.data?.error || 'Failed to create link';
-    alert(errorMessage);
-  }
-};
+    try {
+      await updateLink(slug, newName);
+      // Refresh the links list
+      await fetchLinks();
+    } catch (error) {
+      console.error('Failed to update link:', error);
+      alert('Failed to update link');
+    }
+  };
 
   return (
     <>
@@ -312,37 +252,51 @@ const handleSubmit = async (e: React.FormEvent) => {
                     {sortBy === col.key && (sortOrder === "asc" ? "▲" : "▼")}
                   </th>
                 ))}
+                <th className="text-left py-3 px-4 text-cream">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredLinks.map((link, idx) => (
-                <tr key={idx} className="border-b border-rose-500/10 hover:bg-rose-500/10">
-                  <td className="py-3 px-4 text-cream">{link.name}</td>
-                  <td className="py-3 px-4 text-cream">{link.clicks}</td>
-                  <td className="py-3 px-4 text-rose-400 cursor-pointer hover:text-rose-300">
-                    {link.short}
-                  </td>
-                  <td className="py-3 px-4 text-cream truncate max-w-xs">{link.target}</td>
-                  <td className="py-3 px-4 text-cream">{link.date}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-cream">Loading...</td>
                 </tr>
-              ))}
+              ) : filteredLinks.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-cream">No links found</td>
+                </tr>
+              ) : (
+                filteredLinks.map((link) => (
+                  <tr key={link._id} className="border-b border-rose-500/10 hover:bg-rose-500/10">
+                    <td className="py-3 px-4 text-cream">{link.name}</td>
+                    <td className="py-3 px-4 text-cream">{link.clicks || 0}</td>
+                    <td className="py-3 px-4 text-rose-400 cursor-pointer hover:text-rose-300">
+                      {window.location.origin}/r/{link._id}
+                    </td>
+                    <td className="py-3 px-4 text-cream truncate max-w-xs">{link.target}</td>
+                    <td className="py-3 px-4 text-cream">
+                      {new Date(link.createDate).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => handleUpdate(link._id, link.name)}
+                        className="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600 transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(link._id)}
+                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* ===== PAGINATION (Use nextCursor from GET /api/links response) ===== */}
-        {/* 
-        {nextCursor && (
-          <div className="mt-6 text-center">
-            <button 
-              onClick={loadMore}
-              className="bg-rose-500 text-cream px-6 py-2 rounded-lg hover:bg-rose-600 transition"
-            >
-              Load More
-            </button>
-          </div>
-        )}
-        */}
       </div>
     </>
   );
