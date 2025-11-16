@@ -6,21 +6,21 @@ export default function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-rose-600 backdrop-blur-sm border-b border-rose-500/20 px-8 py-4">
+    <header className="bg-rose-600 border-b border-rose-500/20 px-8 py-4">
       <nav className="flex items-center justify-between">
         <button
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/")}
           className="text-2xl font-semibold text-cream hover:text-rose-200 transition"
         >
-          ShortCake URL Shortener
+          shortcak.es
         </button>
 
         <div className="flex gap-6">
           <button
-            onClick={() => navigate("/analytics")}
+            onClick={() => navigate("/dashboard")}
             className="text-md text-cream hover:text-rose-300 transition"
           >
-            Analytics
+            Dashboard
           </button>
 
           <button
