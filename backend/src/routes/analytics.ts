@@ -169,6 +169,8 @@ router.get("/:slug/metrics", async (req: any, res) => {
 
     return res.json({
       name: ownerDoc.name ?? null,
+      target: ownerDoc.target ?? null,
+      slug: ownerDoc._id ?? null,
       totalClicks: analytics?.totalClicks ?? 0,
       uniqueClicks: analytics?.uniqueClicks ?? 0,
     });
