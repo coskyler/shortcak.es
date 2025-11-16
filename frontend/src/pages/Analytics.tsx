@@ -7,9 +7,8 @@ import { onAuthStateChanged } from "firebase/auth";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 
-//change to normal fetch
 // ===== AXIOS API CALLS =====
-const BASE_URL = 'http://localhost:8084';
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const client = axios.create({
   baseURL: BASE_URL,
@@ -17,7 +16,6 @@ const client = axios.create({
     'Content-Type': 'application/json'
   }
 });
-
 
 client.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
@@ -46,23 +44,29 @@ const getClickLogs = (slug: string) =>
 const getDevices = (slug: string) =>
   client.get(`/api/analytics/${slug}/clicksbydevice`);
 
+// Top referrers endpoint (same response format as country/device)
+const getReferrers = (slug: string) =>
+  client.get(`/api/analytics/${slug}/clicksbyreferrer`);
+
 export default function Analytics() {
   // Get slug from URL params (e.g., /analytics/:slug)
   const { slug } = useParams<{ slug: string }>();
-  
+
   // State for API data
-  const [metrics, setMetrics] = useState({ 
+  const [metrics, setMetrics] = useState({
     name: "",
-    totalClicks: 0, 
-    uniqueClicks: 0 
+    target: "",
+    slug: "",
+    totalClicks: 0,
+    uniqueClicks: 0
   });
   const [timeseries, setTimeseries] = useState<Array<{ date: string; clicks: number }>>([]);
   const [geographics, setGeographics] = useState<Array<{ country: string; clicks: number }>>([]);
   const [devices, setDevices] = useState<Array<{ device: string; clicks: number }>>([]);
+  const [referrers, setReferrers] = useState<Array<{ referrer: string; clicks: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
   const [clickLogs, setClickLogs] = useState<Array<any>>([]);
-
 
   // Wait for Firebase auth to initialize
   useEffect(() => {
@@ -108,6 +112,14 @@ export default function Analytics() {
         }));
         setDevices(devArray);
 
+        // Fetch referrers
+        const refRes = await getReferrers(slug);
+        const refArray = Object.entries(refRes.data).map(([referrer, clicks]) => ({
+          referrer: referrer || "Direct",
+          clicks: clicks as number
+        }));
+        setReferrers(refArray);
+
         // Fetch click logs
         const clickLogsRes = await getClickLogs(slug);
         setClickLogs(clickLogsRes.data);
@@ -137,25 +149,51 @@ export default function Analytics() {
     <>
       <Header />
       <main className="min-h-screen bg-gradient-to-br from-amber-950/25 via-rose-500/25 to-amber-950/25 p-8 text-cream">
+        {/* ===== LINK INFO HEADER ===== */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
 
-        <section className="bg-black/40 border border-rose-500/20 rounded-2xl p-6 mb-10 shadow">
-          <label className="block font-medium mb-2">Link: {metrics.name || slug}</label>
+          {/* Left: Title */}
+          <h2 className="text-5xl font-semibold mb-4 md:mb-0">
+            {metrics.name}
+          </h2>
 
+          {/* Right: Redirect + Alias */}
+          <div className="space-y-1 text-right">
+            <p className="text-cream/80">
+              <span className="font-semibold">redirects to:</span> {metrics.target}
+            </p>
+
+            <p className="text-cream/80">
+              <span className="font-semibold">alias:</span>{" "}
+              {`${window.location.origin}/r/${slug}`}
+            </p>
+          </div>
+
+        </div>
+
+
+        {/* ===== INDIVIDUAL ANALYTIC CARDS ===== */}
+        <div className="space-y-6 mb-10">
+
+          {/* Row 1: Total / Unique */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Total Clicks */}
-            <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10">
-              <h4 className="font-semibold mb-1">Total Clicks</h4>
-              <p className="text-2xl">{metrics.totalClicks}</p>
+            <div className="bg-black/40 p-6 rounded-2xl border border-rose-600 shadow-lg shadow-black/50">
+              <h4 className="font-semibold mb-4">Total Clicks</h4>
+              <p className="text-5xl font-semibold">{metrics.totalClicks}</p>
             </div>
 
             {/* Unique Clicks */}
-            <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10">
-              <h4 className="font-semibold mb-1">Unique Clicks</h4>
-              <p className="text-2xl">{metrics.uniqueClicks}</p>
+            <div className="bg-black/40 p-6 rounded-2xl border border-rose-600 shadow-lg shadow-black/50">
+              <h4 className="font-semibold mb-4">Unique Clicks</h4>
+              <p className="text-5xl font-semibold">{metrics.uniqueClicks}</p>
             </div>
+          </div>
 
+          {/* Row 2: Countries / Devices / Referrers */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Top Countries */}
-            <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10">
+            <div className="bg-black/40 p-6 rounded-2xl border border-rose-600 shadow-lg shadow-black/50">
               <h4 className="font-semibold mb-2">Top Countries</h4>
               <ul className="space-y-1 text-sm">
                 {geographics.length > 0 ? (
@@ -172,7 +210,7 @@ export default function Analytics() {
             </div>
 
             {/* Top Devices */}
-            <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10">
+            <div className="bg-black/40 p-6 rounded-2xl border border-rose-600 shadow-lg shadow-black/50">
               <h4 className="font-semibold mb-2">Top Devices</h4>
               <ul className="space-y-1 text-sm">
                 {devices.length > 0 ? (
@@ -188,64 +226,109 @@ export default function Analytics() {
               </ul>
             </div>
 
-            {/* Clicks Over Time */}
-            <div className="bg-black/30 p-4 rounded-xl border border-rose-500/10 col-span-1 md:col-span-2">
-              <h4 className="font-semibold mb-2">Clicks Over Time</h4>
-              {timeseries.length > 0 ? (
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={timeseries}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(244, 63, 94, 0.2)" />
-                      <XAxis 
-                        dataKey="date" 
-                        stroke="#fdf4dc"
-                        tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      />
-                      <YAxis stroke="#fdf4dc" />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', border: '1px solid rgba(244, 63, 94, 0.3)', borderRadius: '8px' }}
-                        labelStyle={{ color: '#fdf4dc' }}
-                        itemStyle={{ color: '#fb7185' }}
-                        labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="clicks" 
-                        stroke="#fb7185" 
-                        strokeWidth={2}
-                        dot={{ fill: '#fb7185', r: 4 }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="text-cream/50 text-center py-8">No data available</div>
-              )}
+            {/* Top Referrers */}
+            <div className="bg-black/40 p-6 rounded-2xl border border-rose-600 shadow-lg shadow-black/50">
+              <h4 className="font-semibold mb-2">Top Referrers</h4>
+              <ul className="space-y-1 text-sm">
+                {referrers.length > 0 ? (
+                  referrers.map((ref, idx) => (
+                    <li key={idx} className="flex justify-between">
+                      <span className="truncate max-w-[10rem]">
+                        {ref.referrer}
+                      </span>
+                      <span className="text-rose-300">{ref.clicks} clicks</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-cream/50">No data available</li>
+                )}
+              </ul>
             </div>
           </div>
-        </section>
 
-        {/* Recent Clicks */}
-        <section className="bg-black/40 border border-rose-500/20 rounded-2xl p-6 shadow">
+          {/* Clicks Over Time */}
+          <div className="bg-black/40 p-6 rounded-2xl border border-rose-600 shadow-lg shadow-black/50">
+            <h4 className="font-semibold mb-2">Clicks Over Time</h4>
+            {timeseries.length > 0 ? (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={timeseries}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(244, 63, 94, 0.2)" />
+                    <XAxis
+                      dataKey="date"
+                      stroke="#fdf4dc"
+                      tickFormatter={(date) =>
+                        new Date(date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      }
+                    />
+                    <YAxis stroke="#fdf4dc" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        border: '1px solid rgba(244, 63, 94, 0.3)',
+                        borderRadius: '8px',
+                      }}
+                      labelStyle={{ color: '#fdf4dc' }}
+                      itemStyle={{ color: '#fb7185' }}
+                      labelFormatter={(date) =>
+                        new Date(date).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      }
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="clicks"
+                      stroke="#fb7185"
+                      strokeWidth={2}
+                      dot={{ fill: '#fb7185', r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-cream/50 text-center py-8">No data available</div>
+            )}
+          </div>
+
+        </div>
+
+
+        {/* ===== RECENT CLICKS ===== */}
+        <section className="">
           <h3 className="text-xl font-semibold mb-4">Recent Clicks</h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm border border-rose-500/10">
+            <table className="min-w-full bg-black/40 backdrop-blur-sm shadow-lg">
               <thead className="bg-rose-500/80 border-b border-rose-500/30">
                 <tr>
-                  <th className="text-left py-3 px-4">IP Address</th>
-                  <th className="text-left py-3 px-4">Referrer</th>
-                  <th className="text-left py-3 px-4">Country</th>
-                  <th className="text-left py-3 px-4">Timestamp</th>
+                  <th className="text-left py-3 px-4 text-cream">IP Address</th>
+                  <th className="text-left py-3 px-4 text-cream">Referrer</th>
+                  <th className="text-left py-3 px-4 text-cream">Country</th>
+                  <th className="text-left py-3 px-4 text-cream">Timestamp</th>
                 </tr>
               </thead>
               <tbody>
                 {clickLogs.map((log, idx) => (
-                  <tr key={idx} className="border-b border-rose-500/10 hover:bg-rose-500/10">
-                    <td className="py-3 px-4">{log.ip?.replace('::ffff:', '') ?? 'Unknown'}</td>
-                    <td className="py-3 px-4 truncate max-w-xs">{log.referrer || 'Direct'}</td>
-                    <td className="py-3 px-4">{log.country || 'Unknown'}</td>
-                    <td className="py-3 px-4">
+                  <tr
+                    key={idx}
+                    className="border-b border-rose-500/10 hover:bg-rose-500/10"
+                  >
+                    <td className="py-3 px-4 text-cream">
+                      {log.ip?.replace("::ffff:", "") ?? "Unknown"}
+                    </td>
+                    <td className="py-3 px-4 text-cream truncate max-w-xs">
+                      {log.referrer || "Direct"}
+                    </td>
+                    <td className="py-3 px-4 text-cream">
+                      {log.country || "Unknown"}
+                    </td>
+                    <td className="py-3 px-4 text-cream">
                       {new Date(log.timeStamp).toLocaleString()}
                     </td>
                   </tr>
@@ -254,6 +337,7 @@ export default function Analytics() {
             </table>
           </div>
         </section>
+
       </main>
     </>
   );

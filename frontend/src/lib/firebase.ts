@@ -13,3 +13,21 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+//attach auth to window for DEV ONLY
+declare global {
+  interface Window {
+    auth: ReturnType<typeof getAuth>;
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.auth = auth;
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      const token = await user.getIdToken(true);
+      console.log("[DEBUG] Firebase ID Token:", token);
+    }
+  });
+}
