@@ -2,7 +2,7 @@
 
 shortcak.es doesn’t just shorten links — it gives you deep insight into how they’re used.
 
-A modern, analytics-focused URL shortener built on the **MERN stack** with a **React + Vite + Tailwind** frontend, a **Node/Express** backend, **MongoDB**, and **Firebase Authentication**.
+A modern, analytics-focused URL shortener built on the **MERN stack** with a **React + Vite + Tailwind** frontend, a **Node/Express** backend, **MongoDB Atlas**, and **Firebase Authentication**.
 Fully Dockerized and served via Nginx on the same origin for reliability, speed, and scalability.
 
 ---
@@ -38,7 +38,7 @@ Fully Dockerized and served via Nginx on the same origin for reliability, speed,
 
 - **Frontend:** React, Vite, Tailwind CSS  
 - **Backend:** Node.js, Express  
-- **Database:** MongoDB  
+- **Database:** MongoDB Atlas  
 - **Auth:** Firebase Authentication  
 - **Infrastructure:**  
   - Docker for backend containers  
