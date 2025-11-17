@@ -14,11 +14,11 @@ Fully Dockerized and served via Nginx on the same origin for reliability, speed,
     <tr>
       <td align="center">
         <strong>Analytics View</strong><br/>
-        <img src="shortcakes_analytics.png" alt="shortcak.es analytics view" width="450"/>
+        <img src="media/shortcakes_analytics.png" alt="shortcak.es analytics view" width="450"/>
       </td>
       <td align="center">
         <strong>Dashboard</strong><br/>
-        <img src="shortcakes_dashboard.png" alt="shortcak.es dashboard" width="450"/>
+        <img src="media/shortcakes_dashboard.png" alt="shortcak.es dashboard" width="450"/>
       </td>
     </tr>
   </table>
