@@ -1,6 +1,7 @@
 // links.ts
 import express from "express";
 import { connectDB } from "../db";
+import { randomSlug } from "../utils";
 import { LinkRedirect, LinkAnalytics, DailyClick, ClickLog, UserAnalytics } from "../types/docTypes"; // Import UserAnalytics
 
 const router = express.Router();
@@ -54,16 +55,6 @@ router.post("/", async (req: any, res) => {
 
         const db = await connectDB();
         const linkRedirects = db.collection<LinkRedirect>("linkRedirects");
-
-        // helper to generate a slug candidate
-        function randomSlug(len = 6) {
-            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            let out = "";
-            for (let i = 0; i < len; i++) {
-                out += chars[Math.floor(Math.random() * chars.length)];
-            }
-            return out;
-        }
 
         // helper to ensure slug is unique
         async function generateUniqueSlug(): Promise<string> {
