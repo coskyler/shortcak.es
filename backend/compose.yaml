@@ -1,3 +1,5 @@
+
+name: shortcakes
 services:
   server:
     image: shortcakes_server
