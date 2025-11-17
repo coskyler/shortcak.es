@@ -22,7 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool isLoading = false;
 
   // --- Firebase Sign Up Function ---
-  Future<void> signUp() async {
+  Future<void> _handleEmailSignUp() async {
     final email = emailController.text.trim();
     final password = passController.text.trim();
     final confirm = confirmController.text.trim();
@@ -70,10 +70,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   //input field builder
   Widget buildInput(
-      String placeholder,
-      TextEditingController controller, {
-        bool obscure = false,
-      }) {
+    String placeholder,
+    TextEditingController controller, {
+    bool obscure = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -87,7 +87,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             filled: true,
             fillColor: Colors.transparent,
             contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             enabledBorder: OutlineInputBorder(
               borderSide: const BorderSide(color: Color(0xFFFFF8E7)),
               borderRadius: BorderRadius.circular(12),
@@ -128,6 +128,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
             ),
           ),
+
+          Positioned(
+            top: 50,
+            left: 20,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.35),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.25),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: const Icon(
+                  Icons.arrow_back,
+                  size: 24,
+                  color: Color(0xFFFFF8E7),
+                ),
+              ),
+            ),
+          ),
+
           Positioned(
             bottom: 0,
             right: 0,
@@ -185,7 +217,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       children: [
                         Expanded(
                             child:
-                            buildInput("First Name", firstController)),
+                                buildInput("First Name", firstController)),
                         const SizedBox(width: 16),
                         Expanded(
                             child: buildInput("Last Name", lastController)),
@@ -230,21 +262,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: isLoading ? null : signUp,
+                        onPressed: isLoading ? null : _handleEmailSignUp,
                         child: isLoading
                             ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFFDD4363)),
-                        )
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFFDD4363)),
+                              )
                             : const Text(
-                          "Sign Up",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16),
-                        ),
+                                "Sign Up",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 16),
+                              ),
                       ),
                     ),
 

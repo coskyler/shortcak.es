@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/firebase.dart';
-// import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,15 +35,13 @@ class LoginScreenState extends State<LoginScreen> {
       );
 
       final user = FirebaseService.auth.currentUser;
-      /*
+
+      // ----------------- temporarily disabled verification for log in, use after remote server set up -------------
       if (user != null && !user.emailVerified) {
         _showMessage("Please verify your email before logging in.");
         setState(() => _loading = false);
         return;
-      }*/
-
-      //fetch and store ID token
-      // await FirebaseService.getIdToken();
+      }
 
       FirebaseAuth.instance.authStateChanges().listen((user) async {
         if (user != null && user.emailVerified) {
@@ -75,27 +73,28 @@ class LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {}
-  //   try {
-  //     final googleUser = await GoogleSignIn().signIn();
-  //     if (googleUser == null) return; // User cancelled
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return; // user cancelled
 
-  //     final googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-  //     final credential = GoogleAuthProvider.credential(
-  //       accessToken: googleAuth.accessToken,
-  //       idToken: googleAuth.idToken,
-  //     );
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-  //     await FirebaseService.auth.signInWithCredential(credential);
+      //attempt sign in with credentials
+      await FirebaseAuth.instance.signInWithCredential(credential);
 
-  //     await FirebaseService.getIdToken();
+      Navigator.pushReplacementNamed(context, '/dashboard'); //move to next page after successful google sign in
 
-  //     Navigator.pushReplacementNamed(context, '/dashboard');
-  //   } catch (e) {
-  //     _showMessage("Google sign-in failed.");
-  //   }
-  // }
+      print("Signed in as ${FirebaseAuth.instance.currentUser!.displayName}"); //display account
+    } catch (e) {
+      print("Google sign-in failed: $e"); //display error code
+    }
+  }
 
   void _showMessage(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -121,7 +120,7 @@ class LoginScreenState extends State<LoginScreen> {
             filled: true,
             fillColor: Colors.transparent,
             contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             enabledBorder: OutlineInputBorder(
               borderSide: const BorderSide(color: Color(0xFFFFF8E7)),
               borderRadius: BorderRadius.circular(12),
@@ -158,7 +157,7 @@ class LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-
+          
           Positioned(
             top: 50,
             left: 20,
@@ -276,13 +275,13 @@ class LoginScreenState extends State<LoginScreen> {
                         onPressed: _loading ? null : _handleEmailLogin,
                         child: _loading
                             ? const CircularProgressIndicator(
-                          color: Color(0xFFFFF8E7),
-                        )
+                                color: Color(0xFFFFF8E7),
+                              )
                             : const Text(
-                          "Log in",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500, fontSize: 16),
-                        ),
+                                "Log in",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500, fontSize: 16),
+                              ),
                       ),
                     ),
 
@@ -310,7 +309,7 @@ class LoginScreenState extends State<LoginScreen> {
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           side:
-                          const BorderSide(color: Color(0xFFFFF8E7)),
+                              const BorderSide(color: Color(0xFFFFF8E7)),
                           foregroundColor: const Color(0xFFFFF8E7),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 24, vertical: 14),

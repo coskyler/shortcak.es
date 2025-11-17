@@ -8,6 +8,8 @@ import 'dart:convert';
 import 'package:shortcakes/screens/AnalyticsScreen.dart';
 import 'package:shortcakes/utils/firebase.dart';
 import 'package:shortcakes/routes/routes.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/services.dart'; // ⭐ ADDED for Clipboard
 
 /// ⛅ Same API base URL as web's VITE_API_URL
 const String apiBaseUrl = "https://shortcak.es";
@@ -54,6 +56,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _aliasController = TextEditingController();
   bool _creatingLink = false;
+
+  String? _newShortLink; // ⭐ ADDED – stores last created short link
 
   @override
   void initState() {
@@ -164,6 +168,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (res.statusCode >= 400) {
         throw Exception("Failed to create link: ${res.body}");
       }
+
+      // Try to pull the created id/slug from response to build short URL
+      String? newId;
+      try {
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map<String, dynamic>) {
+          newId = (decoded["_id"] ?? decoded["id"] ?? decoded["slug"])
+              ?.toString();
+        }
+      } catch (_) {
+        // ignore parse errors, just won't show inline link
+      }
+
+      setState(() {
+        _newShortLink =
+        newId != null ? "$apiBaseUrl/r/$newId" : null; // ⭐ ADDED
+      });
 
       // Success: clear fields, reload links
       _urlController.clear();
@@ -310,18 +331,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       TextButton.icon(
                         onPressed: () async {
                           await FirebaseService.auth.signOut();
+                          await GoogleSignIn().signOut();
 
                           if (!mounted) return;
 
                           Navigator.pushNamedAndRemoveUntil(
                             context,
-                            Routes.LOGINSCREEN,
+                            Routes.HOMESCREEN,
                                 (route) => false,
                           );
                         },
                         icon: const Icon(
                           Icons.logout,
-                          size: 18,
+                          size: 24,
                           color: Color(0xFFFFF8E7),
                         ),
                         label: Text(
@@ -530,6 +552,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                         ),
+
+                        // ⭐ ADDED: show newly created short link under the button
+                        if (_newShortLink != null) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            "New short link:",
+                            style: GoogleFonts.quicksand(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color:
+                              const Color(0xFFFFF8E7).withOpacity(0.85),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: () {
+                              Clipboard.setData(
+                                ClipboardData(text: _newShortLink!),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Copied to clipboard"),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              _newShortLink!,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.quicksand(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFFF7B9C),
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

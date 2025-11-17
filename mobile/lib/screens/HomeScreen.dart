@@ -1,17 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // TODO: hook this up to your real Google sign-in flow.
+  //handle google sign in
   Future<void> _handleGoogleSignIn(BuildContext context) async {
-    // Implement your Google sign-in logic here.
-    // For example, call your auth service then navigate to '/dashboard'.
-    // Navigator.pushNamed(context, '/dashboard');
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return; // user cancelled
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      //attempt sign in with credentials
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      Navigator.pushReplacementNamed(context, '/dashboard'); //move to next page after successful google sign in
+
+      print("Signed in as ${FirebaseAuth.instance.currentUser!.displayName}"); //display account
+    } catch (e) {
+      print("Google sign-in failed: $e"); //display error code
+    }
   }
 
+  //user interface
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -146,7 +166,7 @@ class HomeScreen extends StatelessWidget {
                               Navigator.pushNamed(context, '/signup');
                             },
                             child: const Text(
-                              "Sign Up",
+                              "Create Account",
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
                                 fontSize: 16,
@@ -182,7 +202,7 @@ class HomeScreen extends StatelessWidget {
                                 Icon(Icons.g_mobiledata, size: 24),
                                 SizedBox(width: 8),
                                 Text(
-                                  "Sign In with Google",
+                                  "Sign Up with Google",
                                   style: TextStyle(
                                     fontSize: 16,
                                   ),
