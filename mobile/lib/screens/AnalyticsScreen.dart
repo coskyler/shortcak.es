@@ -9,7 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/firebase.dart';
 
 /// Match this to VITE_API_URL from the web frontend .env
-const String apiBaseUrl = 'https://YOUR_API_URL_HERE';
+const String apiBaseUrl = "http://10.0.2.2:8084";
 
 class AnalyticsScreen extends StatefulWidget {
   /// Slug of the link, e.g. "my-alias"

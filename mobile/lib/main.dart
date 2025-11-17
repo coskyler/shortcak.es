@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shortcakes/routes/routes.dart';
+import 'package:shortcakes/utils/firebase.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await FirebaseService.initialize();
+
   runApp(const MyApp());
 }
 

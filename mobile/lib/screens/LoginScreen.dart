@@ -1,37 +1,127 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/firebase.dart';
+// import 'package:google_sign_in/google_sign_in.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
-  Future<void> _handleGoogleSignIn(BuildContext context) async {
-    // Implement your Google sign-in logic here.
-    // For example, call your auth service then navigate to '/dashboard'.
-    // Navigator.pushNamed(context, '/dashboard');
+  @override
+  LoginScreenState createState() => LoginScreenState();
+}
+
+class LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _loading = false;
+
+  Future<void> _handleEmailLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage("Please enter email and password.");
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      await FirebaseService.auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = FirebaseService.auth.currentUser;
+      /*
+      if (user != null && !user.emailVerified) {
+        _showMessage("Please verify your email before logging in.");
+        setState(() => _loading = false);
+        return;
+      }*/
+
+      //fetch and store ID token
+      // await FirebaseService.getIdToken();
+
+      FirebaseAuth.instance.authStateChanges().listen((user) async {
+        if (user != null && user.emailVerified) {
+          await user.getIdToken(); //update user token id
+        }
+      });
+
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } on FirebaseAuthException catch (e) {
+      _showMessage(e.message ?? "Login failed.");
+    }
+
+    setState(() => _loading = false);
   }
 
-  Widget buildInput(String label, String placeholder, {bool obscure = false}) {
+  Future<void> _handlePasswordReset() async {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      _showMessage("Enter your email to reset your password.");
+      return;
+    }
+
+    try {
+      await FirebaseService.auth.sendPasswordResetEmail(email: email);
+      _showMessage("Password reset email sent to $email");
+    } on FirebaseAuthException catch (e) {
+      _showMessage(e.message ?? "Error sending reset email.");
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {}
+  //   try {
+  //     final googleUser = await GoogleSignIn().signIn();
+  //     if (googleUser == null) return; // User cancelled
+
+  //     final googleAuth = await googleUser.authentication;
+
+  //     final credential = GoogleAuthProvider.credential(
+  //       accessToken: googleAuth.accessToken,
+  //       idToken: googleAuth.idToken,
+  //     );
+
+  //     await FirebaseService.auth.signInWithCredential(credential);
+
+  //     await FirebaseService.getIdToken();
+
+  //     Navigator.pushReplacementNamed(context, '/dashboard');
+  //   } catch (e) {
+  //     _showMessage("Google sign-in failed.");
+  //   }
+  // }
+
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
+  }
+
+  Widget buildInput(String label, TextEditingController controller,
+      {bool obscure = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFFFFF8E7),
-            fontSize: 14,
-          ),
-        ),
+        Text(label,
+            style: const TextStyle(color: Color(0xFFFFF8E7), fontSize: 14)),
         const SizedBox(height: 6),
         TextField(
+          controller: controller,
           obscureText: obscure,
           style: const TextStyle(color: Color(0xFFFFF8E7)),
           decoration: InputDecoration(
-            hintText: placeholder,
+            hintText: label,
             hintStyle: const TextStyle(color: Color(0xFFFFF8E7)),
             filled: true,
             fillColor: Colors.transparent,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             enabledBorder: OutlineInputBorder(
               borderSide: const BorderSide(color: Color(0xFFFFF8E7)),
               borderRadius: BorderRadius.circular(12),
@@ -51,183 +141,163 @@ class LoginScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      // Rough equivalent of a dark base behind the gradient (like neutral-950)
       backgroundColor: const Color(0xFF0A0A0A),
       body: Stack(
         children: [
-          // === Background gradient (bg-gradient-to-br from-black/25 via-rose-500/25 to-black/25) ===
+          // gradient background
           Container(
-            width: double.infinity,
-            height: double.infinity,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,      // "to-br" in Tailwind
+                begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.black.withValues(alpha: 0.25),              // from-black/25
-                  const Color(0xFFFF1D4D).withValues(alpha: 0.25),   // via-rose-500/25
-                  Colors.black.withValues(alpha: 0.25),              // to-black/25
+                  Colors.black.withOpacity(0.25),
+                  const Color(0xFFFF1D4D).withOpacity(0.25),
+                  Colors.black.withOpacity(0.25),
                 ],
-                stops: const [0.0, 0.5, 1.0],
               ),
             ),
           ),
 
-          // === SVG decor (bottom-right, cream, like the <svg> in React) ===
           Positioned(
             bottom: 0,
             right: 0,
-            child: Opacity(
-              opacity: 0.9,
-              child: SizedBox(
-                width: size.width * 0.9,
-                height: size.height,
-                child: SvgPicture.asset(
-                  'assets/svg/decor.svg',
-                  // 'color' is deprecated, use colorFilter
-                  colorFilter: const ColorFilter.mode(
-                    Color(0xFFFFF8E7), // cream
-                    BlendMode.srcIn,
-                  ),
-                  fit: BoxFit.cover,
+            child: SizedBox(
+              width: size.width * 0.9,
+              height: size.height,
+              child: SvgPicture.asset(
+                'assets/svg/decor.svg',
+                colorFilter: const ColorFilter.mode(
+                  Color(0xFFFFF8E7),
+                  BlendMode.srcIn,
                 ),
+                fit: BoxFit.cover,
               ),
             ),
           ),
 
-          // === Foreground hero content (logo + HomeContent equivalent) ===
           Align(
             alignment: Alignment.centerLeft,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(40), // p-10
+              padding: const EdgeInsets.all(40),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Logo (favicon.svg equivalent)
                     SvgPicture.asset(
                       'assets/icons/favicon.svg',
                       width: 72,
                       height: 72,
                       colorFilter: const ColorFilter.mode(
-                        Color(0xFFFFF8E7), // or cream, or rose gold
+                        Color(0xFFFFF8E7),
                         BlendMode.srcIn,
                       ),
                     ),
 
                     const SizedBox(height: 10),
 
-                    // Headline: "Create Account"
-                    Text(
-                      "Log In",
-                      style: GoogleFonts.quicksand(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                        //letterSpacing: -0.5,
-                        color: Color(0xFFFFF8E7), // cream
+                    Text("Log In",
+                        style: GoogleFonts.quicksand(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFFFF8E7),
+                        )),
+
+                    const SizedBox(height: 16),
+
+                    buildInput("Email", _emailController),
+
+                    const SizedBox(height: 16),
+
+                    buildInput("Password", _passwordController, obscure: true),
+
+                    const SizedBox(height: 8),
+
+                    // === Forgot password button ===
+                    TextButton(
+                      onPressed: _handlePasswordReset,
+                      child: const Text(
+                        "Forgot password?",
+                        style: TextStyle(
+                          color: Color(0xFFFFF8E7),
+                          fontSize: 14,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 16),
 
-                    buildInput("", "Email"),
-
-                    const SizedBox(height: 16),
-
-                    buildInput("", "Password", obscure: true),
-
-                    const SizedBox(height: 32),
-
-                    // Auth buttons: Sign Up with Google
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Sign Up
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: Color(0xFFDD4363), // like text-rose-400 0xFFF97373
-                              ),
-                              foregroundColor: const Color(0xFFDD4363),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/dashboard');
-                            },
-                            child: const Text(
-                              "Log in",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                              ),
-                            ),
+                    // Login button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFDD4363)),
+                          foregroundColor: const Color(0xFFDD4363),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
+                        onPressed: _loading ? null : _handleEmailLogin,
+                        child: _loading
+                            ? const CircularProgressIndicator(
+                          color: Color(0xFFFFF8E7),
+                        )
+                            : const Text(
+                          "Log in",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w500, fontSize: 16),
+                        ),
+                      ),
+                    ),
 
-                        const SizedBox(height: 8),
-                        Row(
-                          children: const[
-                            Expanded(child: Divider(color: Color(0xFFFFF8E7))),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                "OR",
-                                style: TextStyle(
-                                  color: Color(0xFFFFF8E7),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                            Expanded(child: Divider(color: Color(0xFFFFF8E7))),
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: const [
+                        Expanded(
+                            child: Divider(color: Color(0xFFFFF8E7))),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text("OR",
+                              style: TextStyle(
+                                  color: Color(0xFFFFF8E7), fontSize: 14)),
+                        ),
+                        Expanded(
+                            child: Divider(color: Color(0xFFFFF8E7))),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side:
+                          const BorderSide(color: Color(0xFFFFF8E7)),
+                          foregroundColor: const Color(0xFFFFF8E7),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: _handleGoogleSignIn,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.g_mobiledata, size: 24),
+                            SizedBox(width: 8),
+                            Text("Log in with Google",
+                                style: TextStyle(fontSize: 16)),
                           ],
                         ),
-
-                        const SizedBox(height: 12),
-                        // Sign In with Google
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: Color(0xFFFFF8E7), // cream
-                              ),
-                              foregroundColor: const Color(0xFFFFF8E7),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () => _handleGoogleSignIn(context),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(Icons.g_mobiledata, size: 24),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Log in with Google",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
