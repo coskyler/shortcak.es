@@ -1,7 +1,7 @@
 import { FaGoogle, FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { googleSignIn } from "../lib/googleSignIn";
 
@@ -19,7 +19,8 @@ export default function Signup() {
     if (pw !== pw2) return console.warn("Passwords do not match.");
 
     try {
-      await createUserWithEmailAndPassword(auth, email, pw);
+      const cred = await createUserWithEmailAndPassword(auth, email, pw);
+      await sendEmailVerification(cred.user);
 
       navigate("/dashboard");
     } catch (e) {

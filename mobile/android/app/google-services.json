@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "834175067279",
+    "project_id": "shortcak-es",
+    "storage_bucket": "shortcak-es.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:834175067279:android:74cd2ee30dfcdd83423cfa",
+        "android_client_info": {
+          "package_name": "com.example.shortcakes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "834175067279-bak47j2f6kc6rlbeun80uhk6f3uob8cp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.shortcakes",
+            "certificate_hash": "d9d5e2922d2698acc4a763d3239a043559fd9af6"
+          }
+        },
+        {
+          "client_id": "834175067279-ochgk7kcml5s0n0ifvcoo5t8m9l90lqo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbsuNUC-XMcQWdgTGu98rxef85YrqGbu4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "834175067279-ochgk7kcml5s0n0ifvcoo5t8m9l90lqo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "834175067279-m1bdmnf8dg9cvannc7ls7hinpo3j7gkt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mobileDemo"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

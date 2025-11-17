@@ -1,5 +1,8 @@
+
+name: shortcakes
 services:
   server:
+    image: shortcakes_server
     build:
       context: .
     command: npm run dev
