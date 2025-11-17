@@ -7,6 +7,25 @@ Fully Dockerized and served via Nginx on the same origin for reliability, speed,
 
 ---
 
+## Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <strong>Analytics View</strong><br/>
+        <img src="shortcakes_analytics.png" alt="shortcak.es analytics view" width="450"/>
+      </td>
+      <td align="center">
+        <strong>Dashboard</strong><br/>
+        <img src="shortcakes_dashboard.png" alt="shortcak.es dashboard" width="450"/>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
 ## Features
 
 - **Fast URL Shortening**
@@ -16,7 +35,7 @@ Fully Dockerized and served via Nginx on the same origin for reliability, speed,
 - **Rich Analytics**
   - Total clicks per link
   - Unique clicks (cookie-based)
-  - Clicks by device (mobile / desktop / tablet / other)
+  - Clicks by device (mobile / desktop)
   - Referrer breakdown (traffic sources)
   - Region breakdown (country/region)
   - Daily click-history timeseries (clicks per day)
