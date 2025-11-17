@@ -138,7 +138,7 @@ export default function ChangePassword() {
     );
   }
 
-  // ✔ EMAIL VERIFICATION SUCCESS PAGE
+  // EMAIL VERIFICATION SUCCESS PAGE
   if (mode === "verifyEmail" && verifySuccess) {
     return (
       <div className="w-full max-w-lg flex flex-col gap-4">
@@ -159,7 +159,7 @@ export default function ChangePassword() {
     );
   }
 
-  // ✔ PASSWORD RESET PAGE (original)
+  // PASSWORD RESET PAGE
   return (
     <div className="w-full max-w-lg flex flex-col gap-4">
       <button
