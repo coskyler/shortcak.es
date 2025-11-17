@@ -4,21 +4,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 
-/// TODO: set this to the same API base URL you use on the web (VITE_API_URL)
+import '../utils/firebase.dart';
+
+/// Match this to VITE_API_URL from the web frontend .env
 const String apiBaseUrl = 'https://YOUR_API_URL_HERE';
 
 class AnalyticsScreen extends StatefulWidget {
-  /// Slug of the link, e.g. "my-alias" (what your web app gets from /analytics/:slug)
-  final String? slug;
+  /// Slug of the link, e.g. "my-alias"
+  final String slug;
 
-  /// Optional: pass link name/target in when you navigate, to avoid refetching
+  /// Optional initial values so the screen can render something instantly
   final String? initialName;
   final String? initialTarget;
 
   const AnalyticsScreen({
     super.key,
-    this.slug,
+    required this.slug,
     this.initialName,
     this.initialTarget,
   });
@@ -56,91 +59,51 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   void initState() {
     super.initState();
-    // If no slug is provided, just show demo data so the UI works
-    _slug = widget.slug ?? 'demo-slug';
+    _slug = widget.slug;
     if (widget.initialName != null) _name = widget.initialName!;
     if (widget.initialTarget != null) _target = widget.initialTarget!;
-
-    if (widget.slug == null) {
-      _seedDemoData();
-    } else {
-      _fetchAnalytics();
-    }
+    _initAndFetch();
   }
 
-  void _seedDemoData() {
-    setState(() {
-      _name = _name.isNotEmpty ? _name : 'repo';
-      _target = _target.isNotEmpty ? _target : 'https://example.com/demo';
-      _totalClicks = 1234;
-      _uniqueClicks = 987;
-
-      _timeseries = [
-        {'date': '2024-11-01', 'clicks': 12},
-        {'date': '2024-11-02', 'clicks': 25},
-        {'date': '2024-11-03', 'clicks': 40},
-        {'date': '2024-11-04', 'clicks': 28},
-      ];
-
-      _geographics = [
-        {'country': 'United States', 'clicks': 800},
-        {'country': 'Canada', 'clicks': 200},
-        {'country': 'United Kingdom', 'clicks': 150},
-      ];
-
-      _devices = [
-        {'device': 'Desktop', 'clicks': 600},
-        {'device': 'Mobile', 'clicks': 500},
-        {'device': 'Tablet', 'clicks': 134},
-      ];
-
-      _referrers = [
-        {'referrer': 'Direct', 'clicks': 700},
-        {'referrer': 'Google', 'clicks': 300},
-        {'referrer': 'Twitter', 'clicks': 234},
-      ];
-
-      _clickLogs = [
-        {
-          'ipAddress': '192.168.0.1',
-          'userAgent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X)',
-          'country': 'United States',
-          'device': 'Desktop',
-          'referrer': 'Direct',
-          'timeStamp': DateTime.now().toIso8601String(),
-        },
-        {
-          'ipAddress': '10.0.0.2',
-          'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS)',
-          'country': 'Canada',
-          'device': 'Mobile',
-          'referrer': 'Google',
-          'timeStamp': DateTime.now()
-              .subtract(const Duration(hours: 5))
-              .toIso8601String(),
-        },
-      ];
-
-      _loading = false;
-      _error = null;
-    });
-  }
-
-  Future<void> _fetchAnalytics() async {
+  Future<void> _initAndFetch() async {
     setState(() {
       _loading = true;
       _error = null;
     });
 
     try {
-      final slug = _slug;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
 
-      // TODO: add Authorization header like the web (Firebase token)
-      final headers = {
-        'Content-Type': 'application/json',
-        // 'Authorization': 'Bearer YOUR_TOKEN_HERE',
-      };
+      final token = await FirebaseService.getIdToken();
+      if (token == null) {
+        setState(() {
+          _error = "User not authenticated (no token available)";
+          _loading = false;
+        });
+        return;
+      }
 
+      await _fetchAnalytics(token);
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchAnalytics(String idToken) async {
+    final slug = _slug;
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $idToken',
+    };
+
+    try {
+      // These mirror the axios calls from Analytics.tsx
       final metricsRes = await http.get(
         Uri.parse('$apiBaseUrl/api/analytics/$slug/metrics'),
         headers: headers,
@@ -170,13 +133,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         throw Exception('Failed to load metrics: ${metricsRes.body}');
       }
 
-      final metricsJson = jsonDecode(metricsRes.body) as Map<String, dynamic>;
+      final metricsJson =
+      jsonDecode(metricsRes.body) as Map<String, dynamic>;
       final timeseriesJson =
-          jsonDecode(timeseriesRes.body) as List<dynamic>? ?? [];
-      final geoJson = jsonDecode(geoRes.body) as Map<String, dynamic>? ?? {};
-      final devJson = jsonDecode(devRes.body) as Map<String, dynamic>? ?? {};
-      final refJson = jsonDecode(refRes.body) as Map<String, dynamic>? ?? {};
-      final logsJson = jsonDecode(logsRes.body) as List<dynamic>? ?? [];
+      (jsonDecode(timeseriesRes.body) as List<dynamic>? ?? []);
+      final geoJson =
+      (jsonDecode(geoRes.body) as Map<String, dynamic>? ?? {});
+      final devJson =
+      (jsonDecode(devRes.body) as Map<String, dynamic>? ?? {});
+      final refJson =
+      (jsonDecode(refRes.body) as Map<String, dynamic>? ?? {});
+      final logsJson =
+      (jsonDecode(logsRes.body) as List<dynamic>? ?? []);
 
       setState(() {
         _name = metricsJson['name'] ?? _name;
@@ -215,6 +183,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             .toList();
 
         _loading = false;
+        _error = null;
       });
     } catch (e) {
       setState(() {
@@ -252,7 +221,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       backgroundColor: const Color(0xFF0A0A0A),
       body: Stack(
         children: [
-          // Background gradient (same vibe as Login/Dashboard)
+          // Gradient background
           Container(
             width: double.infinity,
             height: double.infinity,
@@ -270,7 +239,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
           ),
 
-          // SVG decor on the right (same as Login)
+          // SVG decor (like Login / Dashboard)
           Positioned(
             bottom: 0,
             right: 0,
@@ -351,7 +320,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           ),
                         )
                       else ...[
-                          // Row: Total / Unique clicks
+                          // Total / Unique
                           Row(
                             children: [
                               Expanded(
@@ -372,17 +341,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
                           const SizedBox(height: 16),
 
-                          // Row: Top countries / devices / referrers
+                          // Top countries / devices / referrers
                           _tripletRow(),
 
                           const SizedBox(height: 16),
 
-                          // Clicks over time (simplified, list-style)
+                          // Clicks over time (list)
                           _timeseriesCard(),
 
                           const SizedBox(height: 16),
 
-                          // Click log table
+                          // Recent click logs
                           _logsTable(),
                         ],
                     ],
@@ -434,7 +403,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Widget _tripletRow() {
     return Column(
       children: [
-        // On mobile, easier to stack instead of 3-column grid
         _listCard(
           title: 'Top Countries',
           items: _geographics,
@@ -634,10 +602,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       _logRow('Country', log['country'] ?? ''),
                       _logRow('Device', log['device'] ?? ''),
                       _logRow('Referrer', log['referrer'] ?? ''),
-                      _logRow('User Agent',
-                          (log['userAgent'] ?? '').toString(), small: true),
-                      _logRow('Time',
-                          _formatDateTime(log['timeStamp'] ?? ''), small: true),
+                      _logRow(
+                        'User Agent',
+                        (log['userAgent'] ?? '').toString(),
+                        small: true,
+                      ),
+                      _logRow(
+                        'Time',
+                        _formatDateTime(log['timeStamp'] ?? ''),
+                        small: true,
+                      ),
                       const Divider(
                         color: Colors.white24,
                         height: 16,

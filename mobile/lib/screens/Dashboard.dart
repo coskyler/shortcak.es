@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shortcakes/screens/AnalyticsScreen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,6 +12,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class LinkItem {
+  final String id;
   final String name;
   final int clicks;
   final String shortUrl;
@@ -18,6 +20,7 @@ class LinkItem {
   final String date; // ISO-ish string for now
 
   LinkItem({
+    required this.id,
     required this.name,
     required this.clicks,
     required this.shortUrl,
@@ -40,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // For now: dummy data, like the web dashboard example
   final List<LinkItem> _links = [
     LinkItem(
+      id: "home",
       name: "Homepage",
       clicks: 1234,
       shortUrl: "shortcak.es/r/home",
@@ -47,6 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       date: "2024-11-01",
     ),
     LinkItem(
+      id: "docs",
       name: "Docs",
       clicks: 456,
       shortUrl: "shortcak.es/r/docs",
@@ -54,6 +59,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       date: "2024-10-15",
     ),
     LinkItem(
+      id: "blog",
       name: "Blog",
       clicks: 789,
       shortUrl: "shortcak.es/r/blog",
@@ -89,6 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final shortUrl = "shortcak.es/r/$slug";
 
     final newItem = LinkItem(
+      id: slug,
       name: name.isNotEmpty ? name : "New Link",
       clicks: 0,
       shortUrl: shortUrl,
@@ -191,32 +198,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildLinkCard(LinkItem item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFFFF1D4D).withOpacity(0.4),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AnalyticsScreen(
+              slug: item.id,          // this matches web: /analytics/:id
+              initialName: item.name,
+              initialTarget: item.target,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: const Color(0xFFFF1D4D).withOpacity(0.4),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _row("Name", item.name),
-          const SizedBox(height: 4),
-          _row("Clicks", item.clicks.toString()),
-          const SizedBox(height: 4),
-          _row("Link", item.shortUrl, highlight: true),
-          const SizedBox(height: 4),
-          _row("Redirects To", item.target, small: true),
-          const SizedBox(height: 4),
-          _row("Date", item.date),
-        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _row("Name", item.name),
+            const SizedBox(height: 4),
+            _row("Clicks", item.clicks.toString()),
+            const SizedBox(height: 4),
+            _row("Link", item.shortUrl, highlight: true),
+            const SizedBox(height: 4),
+            _row("Redirects To", item.target, small: true),
+            const SizedBox(height: 4),
+            _row("Date", item.date),
+          ],
+        ),
       ),
     );
   }
+
 
   Widget _row(String label, String value,
       {bool highlight = false, bool small = false}) {
