@@ -61,6 +61,13 @@ export default function Login() {
         Log In
       </button>
 
+      <button
+        onClick={() => navigate('/resetpassword')}
+        className="text-sm text-rose-400 hover:text-rose-300 hover:underline self-start"
+      >
+        Forgot password?
+      </button>
+
       {/* Divider */}
       <div className="flex items-center gap-3 my-2">
         <div className="h-px flex-1 bg-cream" />
