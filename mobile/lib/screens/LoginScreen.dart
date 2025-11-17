@@ -160,6 +160,37 @@ class LoginScreenState extends State<LoginScreen> {
           ),
 
           Positioned(
+            top: 50,
+            left: 20,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.35),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.25),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: const Icon(
+                  Icons.arrow_back,
+                  size: 24,
+                  color: Color(0xFFFFF8E7),
+                ),
+              ),
+            ),
+          ),
+
+          Positioned(
             bottom: 0,
             right: 0,
             child: SizedBox(

@@ -9,7 +9,6 @@ import 'package:shortcakes/screens/AnalyticsScreen.dart';
 import 'package:shortcakes/utils/firebase.dart';
 import 'package:shortcakes/routes/routes.dart';
 
-
 /// ⛅ Same API base URL as web's VITE_API_URL
 const String apiBaseUrl = "https://shortcak.es";
 
@@ -45,15 +44,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _loadingLinks = true;
   List<LinkItem> _links = [];
 
-  // Sorting + search (same as before)
+  // Sorting + search
   String _searchQuery = "";
   String _sortBy = "date";
   bool _sortAsc = false;
+
+  // Create-link form controllers + state
+  final TextEditingController _urlController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _aliasController = TextEditingController();
+  bool _creatingLink = false;
 
   @override
   void initState() {
     super.initState();
     _fetchLinks();
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _nameController.dispose();
+    _aliasController.dispose();
+    super.dispose();
   }
 
   // ---------------------------------------------------
@@ -79,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         final id = map["_id"] ?? "";
         final name = map["name"] ?? "Untitled";
-        final target = map["target"] ?? "";
+        final target = map["redirect"] ?? "";
         final clicks = (map["totalClicks"] ?? 0) as int;
         final date = map["createDate"] ?? "";
 
@@ -105,6 +118,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     } finally {
       if (mounted) setState(() => _loadingLinks = false);
+    }
+  }
+
+  // ---------------------------------------------------
+  // ✨ Create a new short link (/api/links)
+  // ---------------------------------------------------
+  Future<void> _createShortLink() async {
+    final url = _urlController.text.trim();
+    final name = _nameController.text.trim();
+    final alias = _aliasController.text.trim();
+
+    if (url.isEmpty || name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter both URL and Name.")),
+      );
+      return;
+    }
+
+    setState(() {
+      _creatingLink = true;
+    });
+
+    try {
+      final headers = await FirebaseService.authHeaders();
+      final uri = Uri.parse("$apiBaseUrl/api/links");
+
+      final body = <String, dynamic>{
+        "redirect": url, // backend expects 'redirect' as long URL
+        "name": name,
+      };
+      if (alias.isNotEmpty) {
+        body["alias"] = alias;
+      }
+
+      final res = await http.post(
+        uri,
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(body),
+      );
+
+      if (res.statusCode >= 400) {
+        throw Exception("Failed to create link: ${res.body}");
+      }
+
+      // Success: clear fields, reload links
+      _urlController.clear();
+      _nameController.clear();
+      _aliasController.clear();
+
+      await _fetchLinks();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Short link created!")),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error creating link: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error creating link: $e")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _creatingLink = false;
+        });
+      }
     }
   }
 
@@ -255,20 +340,229 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Search bar
-                  TextField(
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    style: const TextStyle(color: Color(0xFFFFF8E7)),
-                    decoration: InputDecoration(
-                      hintText: "Search links...",
-                      hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                  // CREATE A SHORT LINK BOX
+                  Container(
+                    width: double.infinity,
+                    padding:
+                    const EdgeInsets.symmetric(vertical: 22, horizontal: 22),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.55),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xFFFF1D4D).withOpacity(0.6),
+                        width: 1.4,
                       ),
-                      filled: true,
-                      fillColor: Colors.black.withOpacity(0.6),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFFF1D4D)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF1D4D).withOpacity(0.3),
+                          blurRadius: 12,
+                          spreadRadius: 1,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // TITLE
+                        Center(
+                          child: Text(
+                            "Create a Short Link",
+                            style: GoogleFonts.quicksand(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFFFF8E7),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // URL LABEL
+                        Text(
+                          "Enter a URL to shorten",
+                          style: GoogleFonts.quicksand(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFFFF8E7),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // URL FIELD
+                        TextField(
+                          controller: _urlController,
+                          style: const TextStyle(color: Color(0xFFFFF8E7)),
+                          decoration: InputDecoration(
+                            hintText: "https://example.com",
+                            hintStyle:
+                            const TextStyle(color: Color(0xFF7A7A7A)),
+                            filled: true,
+                            fillColor: Colors.transparent,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide:
+                              const BorderSide(color: Color(0xFFFFF8E7)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                              const BorderSide(color: Color(0xFFEE5A76)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // NAME LABEL
+                        Text(
+                          "Name",
+                          style: GoogleFonts.quicksand(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFFFF8E7),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // NAME FIELD
+                        TextField(
+                          controller: _nameController,
+                          style: const TextStyle(color: Color(0xFFFFF8E7)),
+                          decoration: InputDecoration(
+                            hintText: "ex. My Site",
+                            hintStyle:
+                            const TextStyle(color: Color(0xFF7A7A7A)),
+                            filled: true,
+                            fillColor: Colors.transparent,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide:
+                              const BorderSide(color: Color(0xFFFFF8E7)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                              const BorderSide(color: Color(0xFFEE5A76)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // CUSTOM ALIAS LABEL
+                        Text(
+                          "Custom Alias (optional)",
+                          style: GoogleFonts.quicksand(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFFFF8E7),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // CUSTOM ALIAS FIELD
+                        TextField(
+                          controller: _aliasController,
+                          style: const TextStyle(color: Color(0xFFFFF8E7)),
+                          decoration: InputDecoration(
+                            hintText: "custom alias",
+                            hintStyle:
+                            const TextStyle(color: Color(0xFF7A7A7A)),
+                            filled: true,
+                            fillColor: Colors.transparent,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide:
+                              const BorderSide(color: Color(0xFFFFF8E7)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                              const BorderSide(color: Color(0xFFEE5A76)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // SHORTEN BUTTON
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed:
+                            _creatingLink ? null : _createShortLink,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF1D4D),
+                              foregroundColor: const Color(0xFFFFF8E7),
+                              padding:
+                              const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              shadowColor:
+                              const Color(0xFFFF1D4D).withOpacity(0.5),
+                              elevation: 6,
+                            ),
+                            child: _creatingLink
+                                ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation(
+                                    Color(0xFFFFF8E7)),
+                              ),
+                            )
+                                : Text(
+                              "Shorten",
+                              style: GoogleFonts.quicksand(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFFFFF8E7),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Search bar (matching neon box)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.55),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xFFFF1D4D).withOpacity(0.6),
+                        width: 1.4,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF1D4D).withOpacity(0.3),
+                          blurRadius: 12,
+                          spreadRadius: 1,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      style: const TextStyle(color: Color(0xFFFFF8E7)),
+                      decoration: const InputDecoration(
+                        hintText: "Search links...",
+                        hintStyle: TextStyle(color: Color(0xFF7A7A7A)),
+                        border: InputBorder.none,
                       ),
                     ),
                   ),
@@ -341,8 +635,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _row(String label, String value,
-      {bool highlight = false, bool small = false}) {
+  Widget _row(
+      String label,
+      String value, {
+        bool highlight = false,
+        bool small = false,
+      }) {
     return Row(
       children: [
         Text(

@@ -288,20 +288,42 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       // Header
 
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Color(0xFFFFF8E7)),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
+                          // Existing back arrow
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back_ios_new,
+                                    size: 18, color: Color(0xFFFFF8E7)),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "Back",
+                                style: GoogleFonts.quicksand(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFFFFF8E7).withOpacity(0.8),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            "Back",
-                            style: GoogleFonts.quicksand(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFFFFF8E7).withOpacity(0.8),
+
+                          // NEW: Return to Dashboard button
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacementNamed(context, '/dashboard');
+                            },
+                            child: Text(
+                              "Dashboard",
+                              style: GoogleFonts.quicksand(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFFFF8E7),
+                              ),
                             ),
                           ),
                         ],
@@ -441,6 +463,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Widget _tripletRow() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,  // 👈 key line
       children: [
         _listCard(
           title: 'Top Countries',
@@ -537,6 +560,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Widget _timeseriesCard() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.6),
@@ -546,7 +570,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'Clicks Over Time',
@@ -601,6 +625,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Widget _logsTable() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.6),
@@ -610,7 +635,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'Recent Clicks',
