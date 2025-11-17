@@ -9,7 +9,7 @@ import 'package:shortcakes/screens/AnalyticsScreen.dart';
 import 'package:shortcakes/utils/firebase.dart';
 
 /// ⛅ Same API base URL as web's VITE_API_URL
-const String apiBaseUrl = "https://YOUR_API_URL_HERE";
+const String apiBaseUrl = "http://10.0.2.2:8084";
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
