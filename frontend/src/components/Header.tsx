@@ -10,10 +10,12 @@ export default function Header() {
       <nav className="flex items-center justify-between">
         <button
           onClick={() => navigate("/")}
-          className="text-2xl font-semibold text-cream hover:text-rose-200 transition"
+          className="flex items-center gap-2 text-2xl font-semibold text-cream hover:text-rose-200 transition"
         >
+          <img src="/favicon.svg" alt="logo" className="w-6 h-6" />
           shortcak.es
         </button>
+
 
         <div className="flex gap-6">
           <button
