@@ -1,6 +1,7 @@
 // links.ts
 import express from "express";
 import { connectDB } from "../db";
+import { randomSlug } from "../utils";
 import { LinkRedirect, LinkAnalytics, DailyClick, ClickLog, UserAnalytics } from "../types/docTypes"; // Import UserAnalytics
 
 const router = express.Router();
@@ -70,49 +71,79 @@ router.post("/", async (req: any, res) => {
 
     //validate url
     try {
-      new URL(redirect);
-    } catch {
-      return res.status(400).json({ error: "Invalid URL" });
-    }
+        const uid: string = req.uid!;
 
-    const db = await connectDB();
-    const linkRedirects = db.collection<LinkRedirect>("linkRedirects");
+        const { redirect, name, slug } = req.body as {
+            redirect?: string;
+            name?: string;
+            slug?: string;
+        };
 
-    // helper to generate a slug candidate
-    function randomSlug(len = 6) {
-      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let out = "";
-      for (let i = 0; i < len; i++) {
-        out += chars[Math.floor(Math.random() * chars.length)];
-      }
-      return out;
-    }
+        if (!redirect || !name) {
+            return res.status(400).json({ error: "Missing redirect or name" });
+        }
 
-    // helper to ensure slug is unique
-    async function generateUniqueSlug(): Promise<string> {
-      while (true) {
-        const candidate = randomSlug();
-        const existing = await linkRedirects.findOne({ _id: candidate });
-        if (!existing) return candidate;
-      }
-    }
+        //validate url
+        try {
+            new URL(redirect);
+        } catch {
+            return res.status(400).json({ error: "Invalid URL" });
+        }
 
-    let finalSlug = slug?.trim();
+        const db = await connectDB();
+        const linkRedirects = db.collection<LinkRedirect>("linkRedirects");
 
-    if (finalSlug) {
-      //validate slug (allows alphanumeric characters and hyphens)
-      if (!/^[A-Za-z0-9-]+$/.test(finalSlug)) {
-        return res.status(400).json({ error: "Slug must contain only letters, numbers, or hyphens" });
-      }
+        // helper to ensure slug is unique
+        async function generateUniqueSlug(): Promise<string> {
+            while (true) {
+                const candidate = randomSlug();
+                const existing = await linkRedirects.findOne({ _id: candidate });
+                if (!existing) return candidate;
+            }
+        }
 
-      // verify provided slug does not exist
-      const existing = await linkRedirects.findOne({ _id: finalSlug });
-      if (existing) {
-        return res.status(409).json({ error: "Slug already in use" });
-      }
-    } else {
-      // generate a unique slug
-      finalSlug = await generateUniqueSlug();
+        let finalSlug = slug?.trim();
+
+        if (finalSlug) {
+            //validate slug (allows alphanumeric characters and hyphens)
+            if (!/^[A-Za-z0-9-]+$/.test(finalSlug)) {
+                return res.status(400).json({ error: "Slug must contain only letters, numbers, or hyphens" });
+            }
+
+            // verify provided slug does not exist
+            const existing = await linkRedirects.findOne({ _id: finalSlug });
+            if (existing) {
+                return res.status(409).json({ error: "Slug already in use" });
+            }
+        } else {
+            // generate a unique slug
+            finalSlug = await generateUniqueSlug();
+        }
+
+        const doc: LinkRedirect = {
+            _id: finalSlug,
+            uid,
+            target: redirect,
+            name,
+            createDate: new Date(),
+            deleted: false,
+        };
+
+        await linkRedirects.insertOne(doc);
+
+
+        const userAnalytics = db.collection<UserAnalytics>("userAnalytics");
+        await userAnalytics.updateOne(
+            { _id: uid },
+            { $inc: { totalLinks: 1 } }, // Increment total links
+            { upsert: true } // Create the doc if it doesn't exist
+        );
+
+        return res.status(201).json(doc);
+
+    } catch (err) {
+        console.error("Error creating link:", err);
+        return res.status(500).json({ error: "Failed to create link" });
     }
 
     const doc: LinkRedirect = {

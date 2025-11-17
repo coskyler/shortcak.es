@@ -4,7 +4,7 @@ import { ClickLog, LinkAnalytics, DailyClick, LinkRedirect } from "../types/docT
 
 const router = express.Router();
 
-async function verifyLinkOwnership(slug: string, uid: string) {
+export async function verifyLinkOwnership(slug: string, uid: string) {
   const db = await connectDB();
   const linkRedirects = db.collection<LinkRedirect>("linkRedirects");
 
