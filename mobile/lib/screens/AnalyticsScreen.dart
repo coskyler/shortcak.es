@@ -9,7 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/firebase.dart';
 
 /// Match this to VITE_API_URL from the web frontend .env
-const String apiBaseUrl = "http://10.0.2.2:8084";
+const String apiBaseUrl = "https://shortcak.es";
 
 class AnalyticsScreen extends StatefulWidget {
   /// Slug of the link, e.g. "my-alias"
@@ -135,16 +135,32 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
       final metricsJson =
       jsonDecode(metricsRes.body) as Map<String, dynamic>;
-      final timeseriesJson =
-      (jsonDecode(timeseriesRes.body) as List<dynamic>? ?? []);
-      final geoJson =
-      (jsonDecode(geoRes.body) as Map<String, dynamic>? ?? {});
-      final devJson =
-      (jsonDecode(devRes.body) as Map<String, dynamic>? ?? {});
-      final refJson =
-      (jsonDecode(refRes.body) as Map<String, dynamic>? ?? {});
-      final logsJson =
-      (jsonDecode(logsRes.body) as List<dynamic>? ?? []);
+
+// Decode all other responses defensively
+      final dynamic tsBody = jsonDecode(timeseriesRes.body);
+      final dynamic geoBody = jsonDecode(geoRes.body);
+      final dynamic devBody = jsonDecode(devRes.body);
+      final dynamic refBody = jsonDecode(refRes.body);
+      final dynamic logsBody = jsonDecode(logsRes.body);
+
+// Only treat as List if it *is* a List, otherwise fallback to empty
+      final List<dynamic> timeseriesJson =
+      tsBody is List ? tsBody : const [];
+
+// Only treat as Map if it *is* a Map, otherwise fallback to empty map
+      final Map<String, dynamic> geoJson =
+      geoBody is Map<String, dynamic> ? geoBody : const {};
+
+      final Map<String, dynamic> devJson =
+      devBody is Map<String, dynamic> ? devBody : const {};
+
+      final Map<String, dynamic> refJson =
+      refBody is Map<String, dynamic> ? refBody : const {};
+
+// Logs: same thing, ensure it's a List
+      final List<dynamic> logsJson =
+      logsBody is List ? logsBody : const [];
+
 
       setState(() {
         _name = metricsJson['name'] ?? _name;
@@ -270,6 +286,29 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Header
+
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Color(0xFFFFF8E7)),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            "Back",
+                            style: GoogleFonts.quicksand(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFFFF8E7).withOpacity(0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
                       Text(
                         _name.isNotEmpty ? _name : 'Link Analytics',
                         style: GoogleFonts.quicksand(

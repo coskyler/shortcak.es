@@ -5,12 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0779c5c4-091d-4578-8bb8-79e500667d86" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/lib/routes/routes.dart" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/lib/routes/routes.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mobile/lib/screens/AnalyticsScreen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/lib/screens/AnalyticsScreen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mobile/lib/screens/Dashboard.dart" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/lib/screens/Dashboard.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/lib/screens/LoginScreen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/lib/screens/LoginScreen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mobile/lib/screens/SignUpScreen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/lib/screens/SignUpScreen.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

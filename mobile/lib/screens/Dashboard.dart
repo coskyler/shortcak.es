@@ -7,9 +7,11 @@ import 'dart:convert';
 
 import 'package:shortcakes/screens/AnalyticsScreen.dart';
 import 'package:shortcakes/utils/firebase.dart';
+import 'package:shortcakes/routes/routes.dart';
+
 
 /// ⛅ Same API base URL as web's VITE_API_URL
-const String apiBaseUrl = "http://10.0.2.2:8084";
+const String apiBaseUrl = "https://shortcak.es";
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -207,15 +209,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Dashboard",
-                    style: GoogleFonts.quicksand(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFFFFF8E7),
-                    ),
-                  ),
+                  Row(
+                    children: [
+                      Text(
+                        "Dashboard",
+                        style: GoogleFonts.quicksand(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFFFF8E7),
+                        ),
+                      ),
+                      const Spacer(),
 
+                      // LOG OUT BUTTON
+                      TextButton.icon(
+                        onPressed: () async {
+                          await FirebaseService.auth.signOut();
+
+                          if (!mounted) return;
+
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            Routes.LOGINSCREEN,
+                                (route) => false,
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.logout,
+                          size: 18,
+                          color: Color(0xFFFFF8E7),
+                        ),
+                        label: Text(
+                          "Log out",
+                          style: GoogleFonts.quicksand(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFFFF8E7),
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFFFF8E7),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
 
                   // Search bar
