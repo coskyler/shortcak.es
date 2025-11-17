@@ -122,13 +122,15 @@ router.get("/:slug/clicksbyreferrer", async (req: any, res) => {
 });
 
 
-// click logs for this link
+// click logs for this link (cursor-based)
 router.get("/:slug/clicks", async (req: any, res) => {
   try {
     const { slug } = req.params;
+    let { cursor, limit = 50 } = req.query;
+
+    limit = Math.min(Number(limit) || 25, 25); // cap limit at 20
 
     const ownerDoc = await verifyLinkOwnership(slug, req.uid);
-
     if (!ownerDoc) {
       return res.status(404).json({ error: "Not found or unauthorized" });
     }
@@ -136,17 +138,35 @@ router.get("/:slug/clicks", async (req: any, res) => {
     const db = await connectDB();
     const clickLogs = db.collection<ClickLog>("clickLogs");
 
+    const query: any = { link: slug };
+
+    if (cursor) {
+      query.timeStamp = { $lt: new Date(cursor as string) }; // fetch older than cursor
+    }
+
     const logs = await clickLogs
-      .find({ link: slug })
-      .sort({ timeStamp: -1 })
+      .find(query)
+      .sort({ timeStamp: -1 }) // newest first
+      .limit(limit + 1) // fetch one extra to detect next cursor
       .toArray();
 
-    return res.json(logs);
+    let nextCursor: Date | null = null;
+
+    if (logs.length > limit) {
+      const last = logs.pop()!; // remove extra
+      nextCursor = last.timeStamp; // next cursor is the last timestamp
+    }
+
+    return res.json({
+      data: logs,
+      nextCursor,
+    });
   } catch (err) {
     console.error("clicks error:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 // name, total and unique clicks for this link
 router.get("/:slug/metrics", async (req: any, res) => {

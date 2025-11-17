@@ -23,7 +23,7 @@ export async function connectDB() {
 
 async function initDb(db: Db) {
   // linkRedirects: index on uid
-  await db.collection("linkRedirects").createIndex({ uid: 1 });
+  await db.collection("linkRedirects").createIndex({ uid: 1, _id: 1 });
 
   // dailyClicks: unique (link + date)
   await db.collection("dailyClicks").createIndex(
