@@ -9,7 +9,7 @@ class Routes {
   static const String DASHBOARD = '/dashboard';
 
   static Map<String, Widget Function(BuildContext)> get getroutes => {
-    '/': (context) => DashboardScreen(),
+    '/': (context) => LoginScreen(),
     LOGINSCREEN: (context) => LoginScreen(),
     SIGNUPSCREEN: (context) => SignUpScreen(),
     DASHBOARD: (context) => DashboardScreen(),

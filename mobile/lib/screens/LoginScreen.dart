@@ -5,11 +5,45 @@ import 'package:google_fonts/google_fonts.dart';
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
-  // TODO: hook this up to your real Google sign-in flow.
   Future<void> _handleGoogleSignIn(BuildContext context) async {
     // Implement your Google sign-in logic here.
     // For example, call your auth service then navigate to '/dashboard'.
     // Navigator.pushNamed(context, '/dashboard');
+  }
+
+  Widget buildInput(String label, String placeholder, {bool obscure = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFFFF8E7),
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          obscureText: obscure,
+          style: const TextStyle(color: Color(0xFFFFF8E7)),
+          decoration: InputDecoration(
+            hintText: placeholder,
+            hintStyle: const TextStyle(color: Color(0xFFFFF8E7)),
+            filled: true,
+            fillColor: Colors.transparent,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            enabledBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: Color(0xFFFFF8E7)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: Color(0xFFEE5A76)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -84,9 +118,9 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    // Headline: "Smarter Links. Deeper Insights. Shortcak.es"
+                    // Headline: "Create Account"
                     Text(
-                      "Smarter Links.\nDeeper Insights.",
+                      "Log In",
                       style: GoogleFonts.quicksand(
                         fontSize: 36,
                         fontWeight: FontWeight.w700,
@@ -95,33 +129,18 @@ class LoginScreen extends StatelessWidget {
                         color: Color(0xFFFFF8E7), // cream
                       ),
                     ),
-                    Text(
-                      "Shortcak.es",
-                      style: GoogleFonts.quicksand(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                        //letterSpacing: -0.5,
-                        color: Color(0xFFEE5A76), // cream
-                      ),
-                    ),
 
                     const SizedBox(height: 16),
 
-                    // Description paragraph
-                    const Text(
-                      "Transform every click into real data. "
-                          "Track engagement, location, and growth—all in one dashboard.",
-                      style: TextStyle(
-                        color: Color(0xFFFFF8E7),
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
-                    ),
+                    buildInput("", "Email"),
+
+                    const SizedBox(height: 16),
+
+                    buildInput("", "Password", obscure: true),
 
                     const SizedBox(height: 32),
 
-                    // Auth buttons: Sign Up + Sign In with Google
+                    // Auth buttons: Sign Up with Google
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -143,10 +162,10 @@ class LoginScreen extends StatelessWidget {
                               ),
                             ),
                             onPressed: () {
-                              Navigator.pushNamed(context, '/signup');
+                              Navigator.pushNamed(context, '/dashboard');
                             },
                             child: const Text(
-                              "Sign Up",
+                              "Log in",
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
                                 fontSize: 16,
@@ -155,8 +174,25 @@ class LoginScreen extends StatelessWidget {
                           ),
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: const[
+                            Expanded(child: Divider(color: Color(0xFFFFF8E7))),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                "OR",
+                                style: TextStyle(
+                                  color: Color(0xFFFFF8E7),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: Color(0xFFFFF8E7))),
+                          ],
+                        ),
 
+                        const SizedBox(height: 12),
                         // Sign In with Google
                         SizedBox(
                           width: double.infinity,
@@ -182,40 +218,12 @@ class LoginScreen extends StatelessWidget {
                                 Icon(Icons.g_mobiledata, size: 24),
                                 SizedBox(width: 8),
                                 Text(
-                                  "Sign In with Google",
+                                  "Log in with Google",
                                   style: TextStyle(
                                     fontSize: 16,
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // "Already have an account? Log in"
-                    Row(
-                      children: [
-                        const Text(
-                          "Already have an account? ",
-                          style: TextStyle(
-                            color: Color(0xFFFFF8E7),
-                            fontSize: 13,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/login');
-                          },
-                          child: const Text(
-                            "Log in",
-                            style: TextStyle(
-                              color: Color(0xFFDD4363), // rose-ish
-                              fontSize: 13,
-                              decoration: TextDecoration.underline,
                             ),
                           ),
                         ),
