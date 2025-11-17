@@ -38,8 +38,10 @@ const getTimeseries = (slug: string) =>
 const getGeographics = (slug: string) =>
   client.get(`/api/analytics/${slug}/clicksbycountry`);
 
-const getClickLogs = (slug: string) =>
-  client.get(`/api/analytics/${slug}/clicks`);
+const getClickLogs = (slug: string, cursor?: string | null) =>
+  client.get(`/api/analytics/${slug}/clicks`, {
+    params: cursor ? { cursor } : {}
+  });
 
 const getDevices = (slug: string) =>
   client.get(`/api/analytics/${slug}/clicksbydevice`);
@@ -67,6 +69,8 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
   const [clickLogs, setClickLogs] = useState<Array<any>>([]);
+  const [clickLogsCursor, setClickLogsCursor] = useState<string | null>(null);
+  const [loadingMoreClicks, setLoadingMoreClicks] = useState(false);
 
   // Wait for Firebase auth to initialize
   useEffect(() => {
@@ -120,9 +124,10 @@ export default function Analytics() {
         }));
         setReferrers(refArray);
 
-        // Fetch click logs
+        // Fetch initial click logs (cursor-based)
         const clickLogsRes = await getClickLogs(slug);
-        setClickLogs(clickLogsRes.data);
+        setClickLogs(clickLogsRes.data.data || []);
+        setClickLogsCursor(clickLogsRes.data.nextCursor || null);
 
       } catch (error) {
         console.error('Failed to fetch analytics:', error);
@@ -133,6 +138,21 @@ export default function Analytics() {
 
     fetchAnalytics();
   }, [slug, authReady]);
+
+  const loadMoreClickLogs = async () => {
+    if (!slug || !clickLogsCursor) return;
+    try {
+      setLoadingMoreClicks(true);
+      const res = await getClickLogs(slug, clickLogsCursor);
+      const newLogs = res.data.data || [];
+      setClickLogs((prev) => [...prev, ...newLogs]);
+      setClickLogsCursor(res.data.nextCursor || null);
+    } catch (error) {
+      console.error('Failed to load more click logs:', error);
+    } finally {
+      setLoadingMoreClicks(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -261,6 +281,7 @@ export default function Analytics() {
                         new Date(date).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
+                          timeZone: 'UTC'
                         })
                       }
                     />
@@ -278,6 +299,7 @@ export default function Analytics() {
                           month: 'long',
                           day: 'numeric',
                           year: 'numeric',
+                          timeZone: 'UTC'
                         })
                       }
                     />
@@ -333,9 +355,31 @@ export default function Analytics() {
                     </td>
                   </tr>
                 ))}
+                {clickLogs.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="py-4 px-4 text-center text-cream/50"
+                    >
+                      No clicks recorded yet
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
+
+          {clickLogsCursor && (
+            <div className="mt-4">
+              <button
+                onClick={loadMoreClickLogs}
+                disabled={loadingMoreClicks}
+                className="px-4 py-2 rounded-xl border border-rose-500 bg-black/40 hover:bg-rose-500/20 disabled:opacity-50"
+              >
+                {loadingMoreClicks ? "Loading..." : "Load more"}
+              </button>
+            </div>
+          )}
         </section>
 
       </main>

@@ -3,7 +3,7 @@ import HomeContent from "../components/HomeContent";
 import SignupForm from "../components/Signup";
 import LoginForm from "../components/Login";
 import ResetPassword from "../components/ForgotPassword";
-import ChangePassword from "../components/ChangePassword";
+import ChangePassword from "../components/Auth";
 
 
 function Home() {
@@ -28,7 +28,7 @@ function Home() {
 
         {pathname === "/resetpassword" && <ResetPassword />}
 
-        {pathname === "/changepassword" && <ChangePassword />}
+        {pathname === "/auth" && <ChangePassword />}
       </div>
 
       {/* Decor */}

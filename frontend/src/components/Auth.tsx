@@ -1,48 +1,75 @@
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
+import {
+  confirmPasswordReset,
+  verifyPasswordResetCode,
+  applyActionCode,
+} from "firebase/auth";
 import { auth } from "../lib/firebase";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [oobCode, setOobCode] = useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = useState(true);
-  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const params = new URLSearchParams(location.search);
+  const mode = params.get("mode");
+  const oobCodeParam = params.get("oobCode");
 
+  // Shared state
+  const [loading, setLoading] = useState(true);
+  const [linkError, setLinkError] = useState<string | null>(null);
+
+  // Reset password state
+  const [oobCode, setOobCode] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Extract and verify the reset code from the URL
+  // Email verification state
+  const [verifySuccess, setVerifySuccess] = useState(false);
+
+  // Handle Firebase action modes
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const code = params.get("oobCode");
+    const handle = async () => {
+      if (!oobCodeParam) {
+        setLinkError("Invalid action link.");
+        setLoading(false);
+        return;
+      }
 
-    if (!code) {
-      setVerificationError("Invalid password reset link.");
-      setIsVerifying(false);
-      return;
-    }
-
-    const verify = async () => {
       try {
-        await verifyPasswordResetCode(auth, code);
-        setOobCode(code);
-        setIsVerifying(false);
+        // Password reset flow
+        if (mode === "resetPassword") {
+          await verifyPasswordResetCode(auth, oobCodeParam);
+          setOobCode(oobCodeParam);
+          setLoading(false);
+          return;
+        }
+
+        // Email verification flow
+        if (mode === "verifyEmail") {
+          await applyActionCode(auth, oobCodeParam);
+          setVerifySuccess(true);
+          setLoading(false);
+          return;
+        }
+
+        // Unsupported mode
+        setLinkError("Invalid or unsupported action.");
+        setLoading(false);
       } catch (err) {
-        console.error("Error verifying reset code:", err);
-        setVerificationError("This password reset link is invalid or has expired.");
-        setIsVerifying(false);
+        console.error("Error verifying action code:", err);
+        setLinkError("This link is invalid or has expired.");
+        setLoading(false);
       }
     };
 
-    verify();
-  }, [location.search]);
+    handle();
+  }, [mode, oobCodeParam]);
 
+  // Change password submit
   const handleChangePassword = async () => {
     if (!oobCode) return;
 
@@ -68,30 +95,30 @@ export default function ChangePassword() {
       console.error("Error changing password:", err);
       setStatus("error");
 
-      const code = err?.code as string | undefined;
+      const code = err?.code as string;
       let message = "Something went wrong. Please try again.";
 
-      if (code === "auth/expired-action-code") {
-        message = "This password reset link has expired. Please request a new one.";
-      } else if (code === "auth/invalid-action-code") {
-        message = "This password reset link is invalid. Please request a new one.";
-      } else if (code === "auth/weak-password") {
-        message = "Please choose a stronger password.";
-      }
+      if (code === "auth/expired-action-code") message = "This link has expired.";
+      if (code === "auth/invalid-action-code") message = "This link is invalid.";
+      if (code === "auth/weak-password") message = "Please choose a stronger password.";
 
       setErrorMessage(message);
     }
   };
 
-  if (isVerifying) {
+  // --------------------
+  // RENDER STARTS HERE
+  // --------------------
+
+  if (loading) {
     return (
       <div className="w-full max-w-lg flex flex-col gap-4">
-        <p className="text-sm text-neutral-300">Verifying your reset link...</p>
+        <p className="text-sm text-neutral-300">Verifying link...</p>
       </div>
     );
   }
 
-  if (verificationError) {
+  if (linkError) {
     return (
       <div className="w-full max-w-lg flex flex-col gap-4">
         <button
@@ -102,17 +129,37 @@ export default function ChangePassword() {
           Back to Login
         </button>
 
-        <h1 className="text-5xl md:text-6xl font-semibold tracking-tight leading-tight mb-2">
+        <h1 className="text-5xl font-semibold tracking-tight leading-tight mb-2">
           Link Error
         </h1>
 
-        <p className="text-sm text-rose-400 mt-2">
-          {verificationError}
+        <p className="text-sm text-rose-400 mt-2">{linkError}</p>
+      </div>
+    );
+  }
+
+  // EMAIL VERIFICATION SUCCESS PAGE
+  if (mode === "verifyEmail" && verifySuccess) {
+    return (
+      <div className="w-full max-w-lg flex flex-col gap-4">
+        <h1 className="text-5xl font-semibold tracking-tight leading-tight mb-2">
+          Email Verified
+        </h1>
+
+        <p className="text-sm text-green-400">
+          Your email has been successfully verified. You can now{" "}
+          <button
+            onClick={() => navigate("/login")}
+            className="text-rose-300 underline underline-offset-2 hover:text-rose-200 transition"
+          >
+            log in
+          </button>.
         </p>
       </div>
     );
   }
 
+  // PASSWORD RESET PAGE
   return (
     <div className="w-full max-w-lg flex flex-col gap-4">
       <button
@@ -143,7 +190,7 @@ export default function ChangePassword() {
         />
       </div>
 
-      {/* Confirm password */}
+      {/* Confirm */}
       <div>
         <h3 className="text-sm text-neutral-400 mb-1">Confirm Password</h3>
         <input
@@ -155,7 +202,6 @@ export default function ChangePassword() {
         />
       </div>
 
-      {/* Change password button */}
       <button
         className="hover:cursor-pointer w-full px-6 py-3 border-2 border-rose-400 text-rose-400 rounded-lg font-medium hover:bg-rose-400/10 transition disabled:opacity-60 disabled:cursor-not-allowed"
         onClick={handleChangePassword}
@@ -164,7 +210,6 @@ export default function ChangePassword() {
         {status === "loading" ? "Updating..." : "Change Password"}
       </button>
 
-      {/* Status messages */}
       {status === "success" && (
         <p className="text-sm text-green-400 mt-2">
           Your password has been updated. You can now{" "}
@@ -173,15 +218,12 @@ export default function ChangePassword() {
             className="text-rose-300 underline underline-offset-2 hover:text-rose-200 transition"
           >
             log in
-          </button>
-          .
+          </button>.
         </p>
       )}
 
       {status === "error" && (
-        <p className="text-sm text-rose-400 mt-2">
-          {errorMessage}
-        </p>
+        <p className="text-sm text-rose-400 mt-2">{errorMessage}</p>
       )}
     </div>
   );
