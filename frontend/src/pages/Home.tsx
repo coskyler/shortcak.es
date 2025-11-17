@@ -2,6 +2,8 @@ import { useLocation } from "react-router-dom";
 import HomeContent from "../components/HomeContent";
 import SignupForm from "../components/Signup";
 import LoginForm from "../components/Login";
+import ResetPassword from "../components/ForgotPassword";
+import ChangePassword from "../components/ChangePassword";
 
 
 function Home() {
@@ -23,6 +25,10 @@ function Home() {
         {pathname === "/signup" && <SignupForm />}
 
         {pathname === "/login" && <LoginForm />}
+
+        {pathname === "/resetpassword" && <ResetPassword />}
+
+        {pathname === "/changepassword" && <ChangePassword />}
       </div>
 
       {/* Decor */}
